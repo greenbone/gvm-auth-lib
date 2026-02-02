@@ -1,0 +1,15 @@
+[package]
+name = "gvm-auth-lib"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+chrono = { workspace = true }
+jsonwebtoken = { workspace = true }
+serde = { workspace = true }

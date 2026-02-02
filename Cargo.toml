@@ -1,0 +1,18 @@
+[workspace]
+members = ["gvm-auth-c-lib", "gvm-auth-cli", "gvm-auth-lib"]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+description = "Authentication library for Greenbone Vulnerability Manager"
+repository = "https://github.com/greenbone/gvm-auth-lib"
+license = "AGPL-3.0-or-later"
+
+[workspace.dependencies]
+gvm-auth-lib = { path = "./gvm-auth-lib" }
+chrono = "0.4.43"
+clap = { version = "4.5.54", features = ["derive", "env"] }
+jsonwebtoken = { version = "10.2.0", features = ["aws_lc_rs"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
