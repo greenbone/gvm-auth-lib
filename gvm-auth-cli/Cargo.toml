@@ -1,0 +1,15 @@
+[package]
+name = "gvm-auth-cli" 
+version.workspace = true
+edition.workspace = true
+description = "Basic CLI tools using gvm-auth-lib"
+repository.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "gvm-auth-cli"
+
+[dependencies]
+gvm-auth-lib = { workspace = true }
+chrono = { workspace = true }
+clap = { workspace = true }

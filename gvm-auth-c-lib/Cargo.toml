@@ -1,0 +1,21 @@
+[package]
+name = "gvm-auth-c-lib"
+version.workspace = true
+edition.workspace = true
+description = "C Wrapper for gvm-auth-lib"
+repository.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gvm-auth-lib = { workspace = true }
+chrono = { workspace = true }
+jsonwebtoken = { workspace = true }
+serde = { workspace = true }
+
+[build-dependencies]
+build-print = "1.0.1"
+cbindgen = "0.29.2"
+cc = "1.2.54"
