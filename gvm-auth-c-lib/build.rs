@@ -10,6 +10,10 @@ use std::path::Path;
 fn main() {
     let profile = env::var("PROFILE").unwrap();
     let cargo_manifest_dir_env = env::var("CARGO_MANIFEST_DIR").unwrap();
+    let has_headers_feature = match env::var("CARGO_FEATURE_HEADERS") {
+        Ok(_) => true,
+        Err(_) => false,
+    };
 
     let crate_dir = Path::new(&cargo_manifest_dir_env);
     let workspace_dir = &crate_dir
@@ -19,18 +23,20 @@ fn main() {
 
     let header_output_path = build_dir.join("gvm_auth_c_lib.h");
 
-    info!(
-        "Generating header file ({})...",
-        header_output_path.display()
-    );
-    cbindgen::Builder::new()
-        .with_crate(crate_dir)
-        .with_language(cbindgen::Language::C)
-        .with_pragma_once(true)
-        .with_include_guard("_GVM_AUTH_LIB")
-        .with_header(include_str!("c_header_top.txt"))
-        .with_documentation(true)
-        .generate()
-        .expect("Unable to generate C bindings")
-        .write_to_file(header_output_path);
+    if has_headers_feature {
+        info!(
+            "Generating header file ({})...",
+            header_output_path.display()
+        );
+        cbindgen::Builder::new()
+            .with_crate(crate_dir)
+            .with_language(cbindgen::Language::C)
+            .with_pragma_once(true)
+            .with_include_guard("_GVM_AUTH_LIB")
+            .with_header(include_str!("c_header_top.txt"))
+            .with_documentation(true)
+            .generate()
+            .expect("Unable to generate C bindings")
+            .write_to_file(header_output_path);
+    }
 }

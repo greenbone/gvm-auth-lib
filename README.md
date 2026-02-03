@@ -29,6 +29,16 @@ It can be built with the standard Cargo command
 cargo build -p gvm-auth-c-lib
 ```
 
+In case of build-time errors, it can be useful to exclude the C header file
+generation as cargo and rustc often give more helpful error messages than
+cbindgen.
+
+To do this, you can disable the default features when building the crate:
+
+```
+cargo build -p gvm-auth-c-lib --no-default-features
+```
+
 ### Cgreen tests
 
 To build the Cgreen tests, first create a build directory and initialize the
