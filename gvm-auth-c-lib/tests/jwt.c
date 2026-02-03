@@ -26,21 +26,30 @@ Ensure (jwt, can_generate_valid_token)
 {
   gvm_jwt_encode_secret_t enc_secret;
   gvm_jwt_decode_secret_t dec_secret;
+  gvm_jwt_new_secret_err_t new_secret_err;
   char *token;
-  int ret;
+  gvm_jwt_generate_token_err_t generate_token_err;
+  gvm_jwt_validate_token_err_t validate_token_err;
 
-  enc_secret = gvm_jwt_new_shared_encode_secret ("ABCDEF");
+  enc_secret = gvm_jwt_new_shared_encode_secret ("ABCDEF", &new_secret_err);
+  assert_that (new_secret_err, is_equal_to (GVM_JWT_NEW_SECRET_ERR_OK));
   assert_that (enc_secret, is_not_null);
-  dec_secret = gvm_jwt_new_shared_decode_secret ("ABCDEF");
+  
+  dec_secret = gvm_jwt_new_shared_decode_secret ("ABCDEF", &new_secret_err);
+  assert_that (new_secret_err, is_equal_to (GVM_JWT_NEW_SECRET_ERR_OK));
   assert_that (dec_secret, is_not_null);
-  
-  token = gvm_jwt_generate_token (enc_secret, "testuser", 100);
-  
+
+  generate_token_err = GVM_JWT_GENERATE_TOKEN_ERR_INTERNAL_ERROR;
+  token = gvm_jwt_generate_token (enc_secret, "testuser", 100,
+                                  &generate_token_err);
+  assert_that (generate_token_err,
+               is_equal_to (GVM_JWT_GENERATE_TOKEN_ERR_OK));
   assert_that (token, is_not_null);
   assert_that (token, is_not_equal_to_string (""));
 
-  ret = gvm_jwt_validate_token (dec_secret, token, NULL);
-  assert_that (ret, is_equal_to (0));
+  validate_token_err = gvm_jwt_validate_token (dec_secret, token, NULL);
+  assert_that (validate_token_err,
+               is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_OK));
 
   gvm_jwt_encode_secret_free (enc_secret);
   gvm_jwt_decode_secret_free (dec_secret);
@@ -51,22 +60,34 @@ Ensure (jwt, can_generate_valid_token_from_ecdsa_pem)
 {
   gvm_jwt_encode_secret_t enc_secret;
   gvm_jwt_decode_secret_t dec_secret;
+  gvm_jwt_new_secret_err_t new_secret_err;
   char *token;
-  int ret;
+  gvm_jwt_generate_token_err_t generate_token_err;
+  gvm_jwt_validate_token_err_t validate_token_err;
 
-  enc_secret = gvm_jwt_new_ec_pem_encode_secret (TEST_ECDSA_PRIVATE_PEM);
+  new_secret_err = GVM_JWT_NEW_SECRET_ERR_INTERNAL_ERROR;
+  enc_secret = gvm_jwt_new_ec_pem_encode_secret (TEST_ECDSA_PRIVATE_PEM,
+                                                 &new_secret_err);
+  assert_that (new_secret_err, is_equal_to (GVM_JWT_NEW_SECRET_ERR_OK));
   assert_that (enc_secret, is_not_null);
-  dec_secret = gvm_jwt_new_ec_pem_decode_secret (TEST_ECDSA_PUBLIC_PEM);
+
+  new_secret_err = GVM_JWT_NEW_SECRET_ERR_INTERNAL_ERROR;  
+  dec_secret = gvm_jwt_new_ec_pem_decode_secret (TEST_ECDSA_PUBLIC_PEM,
+                                                 &new_secret_err);
+  assert_that (new_secret_err, is_equal_to (GVM_JWT_NEW_SECRET_ERR_OK));
   assert_that (dec_secret, is_not_null);
-  
-  token = gvm_jwt_generate_token (enc_secret, "testuser", 100);
-  
+
+  generate_token_err = GVM_JWT_GENERATE_TOKEN_ERR_INTERNAL_ERROR;
+  token = gvm_jwt_generate_token (enc_secret, "testuser", 100,
+                                  &generate_token_err);
+  assert_that (generate_token_err,
+               is_equal_to (GVM_JWT_GENERATE_TOKEN_ERR_OK));
   assert_that (token, is_not_null);
   assert_that (token, is_not_equal_to_string (""));
 
-  ret = gvm_jwt_validate_token (dec_secret, token, "testuser");
-  assert_that (ret, is_equal_to (0));
-
+  validate_token_err = gvm_jwt_validate_token (dec_secret, token, "testuser");
+  assert_that (validate_token_err,
+               is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_OK));
   gvm_jwt_encode_secret_free (enc_secret);
   gvm_jwt_decode_secret_free (dec_secret);
   gvm_auth_str_free (token);
@@ -76,21 +97,35 @@ Ensure (jwt, can_generate_valid_token_from_rsa_pem)
 {
   gvm_jwt_encode_secret_t enc_secret;
   gvm_jwt_decode_secret_t dec_secret;
+  gvm_jwt_new_secret_err_t new_secret_err;
   char *token;
-  int ret;
+  gvm_jwt_generate_token_err_t generate_token_err;
+  gvm_jwt_validate_token_err_t validate_token_err;
 
-  enc_secret = gvm_jwt_new_rsa_pem_encode_secret (TEST_RSA_PRIVATE_PEM);
+  new_secret_err = GVM_JWT_NEW_SECRET_ERR_INTERNAL_ERROR;
+  enc_secret = gvm_jwt_new_rsa_pem_encode_secret (TEST_RSA_PRIVATE_PEM,
+                                                  &new_secret_err);
+  assert_that (new_secret_err, is_equal_to (GVM_JWT_NEW_SECRET_ERR_OK));
   assert_that (enc_secret, is_not_null);
-  dec_secret = gvm_jwt_new_rsa_pem_decode_secret (TEST_RSA_PUBLIC_PEM);
+
+  new_secret_err = GVM_JWT_NEW_SECRET_ERR_INTERNAL_ERROR;
+  dec_secret = gvm_jwt_new_rsa_pem_decode_secret (TEST_RSA_PUBLIC_PEM,
+                                                  &new_secret_err);
+  assert_that (new_secret_err, is_equal_to (GVM_JWT_NEW_SECRET_ERR_OK));
   assert_that (dec_secret, is_not_null);
-  
-  token = gvm_jwt_generate_token (enc_secret, "testuser", 100);
-  
+
+  generate_token_err = GVM_JWT_GENERATE_TOKEN_ERR_INTERNAL_ERROR;
+  token = gvm_jwt_generate_token (enc_secret, "testuser", 100,
+                                  &generate_token_err);
+
   assert_that (token, is_not_null);
   assert_that (token, is_not_equal_to_string (""));
+  assert_that (generate_token_err,
+               is_equal_to (GVM_JWT_GENERATE_TOKEN_ERR_OK));
 
-  ret = gvm_jwt_validate_token (dec_secret, token, "testuser");
-  assert_that (ret, is_equal_to (0));
+  validate_token_err = gvm_jwt_validate_token (dec_secret, token, "testuser");
+  assert_that (validate_token_err,
+               is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_OK));
 
   gvm_jwt_encode_secret_free (enc_secret);
   gvm_jwt_decode_secret_free (dec_secret);
@@ -102,21 +137,24 @@ Ensure (jwt, can_validate_subject)
   gvm_jwt_encode_secret_t enc_secret;
   gvm_jwt_decode_secret_t dec_secret;
   char *token;
-  int ret;
+  gvm_jwt_validate_token_err_t validate_token_err;
 
-  enc_secret = gvm_jwt_new_shared_encode_secret ("ABCDEF");
-  dec_secret = gvm_jwt_new_shared_decode_secret ("ABCDEF");
-  
-  token = gvm_jwt_generate_token (enc_secret, "testuser", 100);
+  enc_secret = gvm_jwt_new_shared_encode_secret ("ABCDEF", NULL);
+  dec_secret = gvm_jwt_new_shared_decode_secret ("ABCDEF", NULL);
 
-  ret = gvm_jwt_validate_token (dec_secret, token, NULL);
-  assert_that (ret, is_equal_to (0));
+  token = gvm_jwt_generate_token (enc_secret, "testuser", 100, NULL);
 
-  ret = gvm_jwt_validate_token (dec_secret, token, "testuser");
-  assert_that (ret, is_equal_to (0));
+  validate_token_err = gvm_jwt_validate_token (dec_secret, token, NULL);
+  assert_that (validate_token_err,
+               is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_OK));
 
-  ret = gvm_jwt_validate_token (dec_secret, token, "invalid");
-  assert_that (ret, is_equal_to (2));
+  validate_token_err = gvm_jwt_validate_token (dec_secret, token, "testuser");
+  assert_that (validate_token_err,
+               is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_OK));
+
+  validate_token_err = gvm_jwt_validate_token (dec_secret, token, "invalid");
+  assert_that (validate_token_err,
+               is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_USER_ID_MISMATCH));
 
   gvm_jwt_encode_secret_free (enc_secret);
   gvm_jwt_decode_secret_free (dec_secret);
@@ -128,18 +166,23 @@ Ensure (jwt, rejects_expired_token)
   gvm_jwt_encode_secret_t enc_secret;
   gvm_jwt_decode_secret_t dec_secret;
   char *token;
-  int ret;
+  gvm_jwt_generate_token_err_t generate_token_err;
+  gvm_jwt_validate_token_err_t validate_token_err;
 
-  enc_secret = gvm_jwt_new_shared_encode_secret ("ABCDEF");
-  dec_secret = gvm_jwt_new_shared_decode_secret ("ABCDEF");
-  
-  token = gvm_jwt_generate_token (enc_secret, "testuser", -100);
-  
+  enc_secret = gvm_jwt_new_shared_encode_secret ("ABCDEF", NULL);
+  dec_secret = gvm_jwt_new_shared_decode_secret ("ABCDEF", NULL);
+
+  generate_token_err = GVM_JWT_GENERATE_TOKEN_ERR_INTERNAL_ERROR;
+  token = gvm_jwt_generate_token (enc_secret, "testuser", -100,
+                                  &generate_token_err);
+  assert_that (generate_token_err,
+               is_equal_to (GVM_JWT_GENERATE_TOKEN_ERR_OK));
   assert_that (token, is_not_null);
   assert_that (token, is_not_equal_to_string (""));
 
-  ret = gvm_jwt_validate_token (dec_secret, token, "testuser");
-  assert_that (ret, is_equal_to (1));
+  validate_token_err = gvm_jwt_validate_token (dec_secret, token, "testuser");
+  assert_that (validate_token_err,
+               is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_VALIDATION_FAILED));
 
   gvm_jwt_encode_secret_free (enc_secret);
   gvm_jwt_decode_secret_free (dec_secret);
