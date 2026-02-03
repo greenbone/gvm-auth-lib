@@ -328,8 +328,8 @@ pub extern "C" fn gvm_jwt_generate_token(
         return null_mut();
     }
     let rs_secret = unsafe { &(*secret).s };
-    let user_id_cstr = unsafe { CStr::from_ptr(user_id) };
-    let user_id_str = match user_id_cstr.to_str() {
+    let sub = unsafe { CStr::from_ptr(user_id) };
+    let sub = match sub.to_str() {
         Ok(s) => s.to_string(),
         Err(_e) => {
             set_err!(
@@ -341,7 +341,7 @@ pub extern "C" fn gvm_jwt_generate_token(
     };
 
     let time_delta = TimeDelta::seconds(valid_seconds);
-    let rs_claims = Claims::new(user_id_str, time_delta);
+    let rs_claims = Claims::new(sub, time_delta);
 
     let token = match generate_token(rs_secret, &rs_claims) {
         Ok(s) => s,
@@ -401,12 +401,12 @@ pub extern "C" fn gvm_jwt_validate_token(
     };
 
     if !(user_id.is_null()) {
-        let user_id_cstr = unsafe { CStr::from_ptr(user_id) };
-        let user_id_str = match user_id_cstr.to_str() {
+        let sub = unsafe { CStr::from_ptr(user_id) };
+        let sub = match user_id_cstr.to_str() {
             Ok(s) => s.to_string(),
             Err(_e) => return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_INVALID_USER_ID,
         };
-        if user_id_str != claims.sub {
+        if sub != claims.sub {
             return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_USER_ID_MISMATCH;
         }
     }
