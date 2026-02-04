@@ -402,7 +402,7 @@ pub extern "C" fn gvm_jwt_validate_token(
 
     if !(user_id.is_null()) {
         let sub = unsafe { CStr::from_ptr(user_id) };
-        let sub = match user_id_cstr.to_str() {
+        let sub = match sub.to_str() {
             Ok(s) => s.to_string(),
             Err(_e) => return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_INVALID_USER_ID,
         };
