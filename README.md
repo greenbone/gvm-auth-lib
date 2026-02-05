@@ -39,17 +39,38 @@ To do this, you can disable the default features when building the crate:
 cargo build -p gvm-auth-c --no-default-features
 ```
 
-### Cgreen tests
+### Preparing the installation and tests
 
-To build the Cgreen tests, first create a build directory and initialize the
-CMake project inside:
+To automatically install the C library or build the Cgreen tests,
+first create a build directory and initialize the CMake project inside
+with the same installation prefix as gvm-libs and other GVM modules like gvmd.
+
 ```
 mkdir build
 cd build
-cmake ..
+cmake -DCMAKE_INSTALL_PREFIX=~/my-gvm-prefix ..
 ```
-Afterwards you can build the tests with the make target `tests` and then run
-them with the `test` target:
+
+### Installation
+
+If the prefix is set up correctly, you should be able to install the library,
+header file and pkgconfig file with the standard make target:
+
+```
+make install
+```
+
+It can then be added as a dependency to other CMake projects as
+`libgvm_auth`:
+
+```
+pkg_check_modules(LIBGVM_AUTH REQUIRED libgvm_auth>=0.1.0)
+```
+
+### Cgreen tests
+
+Inside the build directory you can build the tests with the make target `tests`
+and then run them with the `test` target:
 ```
 make tests
 make test

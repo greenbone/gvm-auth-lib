@@ -3,7 +3,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 cmake_minimum_required(VERSION 3.28)
-project(gvm_auth_lib)
+project(gvm_auth_lib VERSION 0.1.0 LANGUAGES C)
+
+set(
+    PROJECT_VERSION_STRING
+    "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+)
 
 # Set Rust compiler profile based on build type
 
@@ -56,6 +61,48 @@ add_custom_command(
 add_custom_target(c-lib DEPENDS ${C_LIB_BUILD_PATH})
 
 include_directories(${RUST_BUILD_PATH} ${TEST_DATA_DIR})
+
+# Installation
+
+if(NOT LIBDIR)
+    set(_DEFAULT_LIBRARY_INSTALL_DIR lib)
+    if(EXISTS "${CMAKE_INSTALL_PREFIX}/lib32/" AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+        set(_DEFAULT_LIBRARY_INSTALL_DIR lib32)
+    endif(
+        EXISTS "${CMAKE_INSTALL_PREFIX}/lib32/"
+        AND CMAKE_SIZEOF_VOID_P EQUAL 4
+    )
+    if(EXISTS "${CMAKE_INSTALL_PREFIX}/lib64/" AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(_DEFAULT_LIBRARY_INSTALL_DIR lib64)
+    endif(
+        EXISTS "${CMAKE_INSTALL_PREFIX}/lib64/"
+        AND CMAKE_SIZEOF_VOID_P EQUAL 8
+    )
+    set(LIBDIR "${_DEFAULT_LIBRARY_INSTALL_DIR}")
+endif(NOT LIBDIR)
+
+if(NOT EXEC_PREFIX)
+    set(EXEC_PREFIX "${CMAKE_INSTALL_PREFIX}")
+endif(NOT EXEC_PREFIX)
+
+if(NOT INCLUDEDIR)
+    set(INCLUDEDIR "${CMAKE_INSTALL_PREFIX}/include")
+endif(NOT INCLUDEDIR)
+
+install(FILES ${C_LIB_BUILD_PATH} DESTINATION ${LIBDIR})
+
+install(FILES ${C_LIB_HEADER_PATH} DESTINATION "${INCLUDEDIR}/gvm/auth")
+
+configure_file(
+    ${AUTH_C_LIB_DIR}/libgvm_auth.pc.in
+    ${CMAKE_BINARY_DIR}/libgvm_auth.pc
+    @ONLY
+)
+
+install(
+    FILES ${CMAKE_BINARY_DIR}/libgvm_auth.pc
+    DESTINATION ${LIBDIR}/pkgconfig
+)
 
 # C Tests
 
