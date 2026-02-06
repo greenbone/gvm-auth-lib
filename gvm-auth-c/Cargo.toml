@@ -1,13 +1,14 @@
 [package]
-name = "gvm-auth-c-lib"
+name = "gvm-auth-c"
 version.workspace = true
 edition.workspace = true
-description = "C Wrapper for gvm-auth-lib"
+description = "C Wrapper for the gvm-auth library"
 repository.workspace = true
 license.workspace = true
 
 [lib]
 crate-type = ["cdylib"]
+name = "gvm_auth"
 
 [features]
 default = ["headers"]

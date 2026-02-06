@@ -20,14 +20,14 @@ endif()
 set(RUST_BASE_DIR ${CMAKE_SOURCE_DIR})
 set(RUST_BUILD_PATH ${RUST_BASE_DIR}/target/${CARGO_PROFILE})
 
-set(AUTH_LIB_DIR ${RUST_BASE_DIR}/gvm-auth-lib)
-set(AUTH_C_LIB_DIR ${RUST_BASE_DIR}/gvm-auth-c-lib)
+set(AUTH_LIB_DIR ${RUST_BASE_DIR}/gvm-auth)
+set(AUTH_C_LIB_DIR ${RUST_BASE_DIR}/gvm-auth-c)
 
 set(C_LIB_FILENAME
-    ${CMAKE_SHARED_LIBRARY_PREFIX}gvm_auth_c_lib${CMAKE_SHARED_LIBRARY_SUFFIX}
+    ${CMAKE_SHARED_LIBRARY_PREFIX}gvm_auth${CMAKE_SHARED_LIBRARY_SUFFIX}
 )
 set(C_LIB_BUILD_PATH ${RUST_BUILD_PATH}/${C_LIB_FILENAME})
-set(C_LIB_HEADER_PATH ${RUST_BUILD_PATH}/gvm_auth_c_lib.h)
+set(C_LIB_HEADER_PATH ${RUST_BUILD_PATH}/gvm_auth.h)
 
 set(TEST_DATA_DIR ${CMAKE_SOURCE_DIR}/test-data)
 set(TEST_HEADER_PATH ${TEST_DATA_DIR}/test_data.h)
@@ -48,7 +48,7 @@ add_custom_command(
     OUTPUT ${C_LIB_BUILD_PATH}
     COMMAND
         ${CARGO_BUILD_CMD} --manifest-path ${RUST_BASE_DIR}/Cargo.toml -p
-        gvm-auth-c-lib
+        gvm-auth-c
     DEPENDS ${LIB_RUST_SRC_FILES} ${C_LIB_RUST_SRC_FILES}
     USES_TERMINAL
 )

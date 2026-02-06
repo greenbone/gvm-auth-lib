@@ -307,7 +307,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "gvm-auth-c-lib"
+name = "gvm-auth-c"
 version = "0.1.0"
 dependencies = [
  "build-print",
