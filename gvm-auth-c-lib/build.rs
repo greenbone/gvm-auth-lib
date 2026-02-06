@@ -10,10 +10,7 @@ use std::path::Path;
 fn main() {
     let profile = env::var("PROFILE").unwrap();
     let cargo_manifest_dir_env = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let has_headers_feature = match env::var("CARGO_FEATURE_HEADERS") {
-        Ok(_) => true,
-        Err(_) => false,
-    };
+    let has_headers_feature = env::var("CARGO_FEATURE_HEADERS").is_ok();
 
     let crate_dir = Path::new(&cargo_manifest_dir_env);
     let workspace_dir = &crate_dir

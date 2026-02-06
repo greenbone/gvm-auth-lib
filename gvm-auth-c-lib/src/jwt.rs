@@ -72,8 +72,11 @@ pub enum gvm_jwt_new_secret_err_t {
 }
 
 /// Create a new JWT decode secret
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_new_decode_secret(
+pub unsafe extern "C" fn gvm_jwt_new_decode_secret(
     secret_type: gvm_jwt_secret_type_t,
     secret_data: *const c_char,
     err: *mut gvm_jwt_new_secret_err_t,
@@ -138,43 +141,62 @@ pub extern "C" fn gvm_jwt_new_decode_secret(
 
     let boxed_secret = Box::<gvm_jwt_decode_secret>::new(gvm_jwt_decode_secret { s: inner_secret });
     set_err!(err, gvm_jwt_new_secret_err_t::GVM_JWT_NEW_SECRET_ERR_OK);
-    return Box::into_raw(boxed_secret);
+
+    Box::into_raw(boxed_secret)
 }
 
 /// Create a new JWT decode secret from a shared secret
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_new_shared_decode_secret(
+pub unsafe extern "C" fn gvm_jwt_new_shared_decode_secret(
     shared_secret: *const c_char,
     err: *mut gvm_jwt_new_secret_err_t,
 ) -> gvm_jwt_decode_secret_t {
-    return gvm_jwt_new_decode_secret(
-        gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_SHARED,
-        shared_secret,
-        err,
-    );
+    unsafe {
+        gvm_jwt_new_decode_secret(
+            gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_SHARED,
+            shared_secret,
+            err,
+        )
+    }
 }
 
 /// Create a new JWT decode secret from ECDSA PEM
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_new_ec_pem_decode_secret(
+pub unsafe extern "C" fn gvm_jwt_new_ec_pem_decode_secret(
     pem: *const c_char,
     err: *mut gvm_jwt_new_secret_err_t,
 ) -> gvm_jwt_decode_secret_t {
-    return gvm_jwt_new_decode_secret(gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_EC_PEM, pem, err);
+    unsafe {
+        gvm_jwt_new_decode_secret(gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_EC_PEM, pem, err)
+    }
 }
 
 /// Create a new JWT decode secret from RSA PEM
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_new_rsa_pem_decode_secret(
+pub unsafe extern "C" fn gvm_jwt_new_rsa_pem_decode_secret(
     pem: *const c_char,
     err: *mut gvm_jwt_new_secret_err_t,
 ) -> gvm_jwt_decode_secret_t {
-    return gvm_jwt_new_decode_secret(gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_RSA_PEM, pem, err);
+    unsafe {
+        gvm_jwt_new_decode_secret(gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_RSA_PEM, pem, err)
+    }
 }
 
 /// Free a JWT decode secret
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_decode_secret_free(secret: gvm_jwt_decode_secret_t) {
+pub unsafe extern "C" fn gvm_jwt_decode_secret_free(secret: gvm_jwt_decode_secret_t) {
     if !(secret.is_null()) {
         let boxed_secret = unsafe { Box::from_raw(secret) };
         drop(boxed_secret);
@@ -182,8 +204,11 @@ pub extern "C" fn gvm_jwt_decode_secret_free(secret: gvm_jwt_decode_secret_t) {
 }
 
 /// Create a new JWT encode secret
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_new_encode_secret(
+pub unsafe extern "C" fn gvm_jwt_new_encode_secret(
     secret_type: gvm_jwt_secret_type_t,
     secret_data: *const c_char,
     err: *mut gvm_jwt_new_secret_err_t,
@@ -248,43 +273,62 @@ pub extern "C" fn gvm_jwt_new_encode_secret(
 
     let boxed_secret = Box::<gvm_jwt_encode_secret>::new(gvm_jwt_encode_secret { s: inner_secret });
     set_err!(err, gvm_jwt_new_secret_err_t::GVM_JWT_NEW_SECRET_ERR_OK);
-    return Box::into_raw(boxed_secret);
+
+    Box::into_raw(boxed_secret)
 }
 
 /// Create a new JWT encode secret using a shared secret
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_new_shared_encode_secret(
+pub unsafe extern "C" fn gvm_jwt_new_shared_encode_secret(
     shared_secret: *const c_char,
     err: *mut gvm_jwt_new_secret_err_t,
 ) -> gvm_jwt_encode_secret_t {
-    return gvm_jwt_new_encode_secret(
-        gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_SHARED,
-        shared_secret,
-        err,
-    );
+    unsafe {
+        gvm_jwt_new_encode_secret(
+            gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_SHARED,
+            shared_secret,
+            err,
+        )
+    }
 }
 
 /// Create a new JWT encode secret from ECDSA PEM
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_new_ec_pem_encode_secret(
+pub unsafe extern "C" fn gvm_jwt_new_ec_pem_encode_secret(
     pem: *const c_char,
     err: *mut gvm_jwt_new_secret_err_t,
 ) -> gvm_jwt_encode_secret_t {
-    return gvm_jwt_new_encode_secret(gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_EC_PEM, pem, err);
+    unsafe {
+        gvm_jwt_new_encode_secret(gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_EC_PEM, pem, err)
+    }
 }
 
 /// Create a new JWT encode secret from RSA PEM
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_new_rsa_pem_encode_secret(
+pub unsafe extern "C" fn gvm_jwt_new_rsa_pem_encode_secret(
     pem: *const c_char,
     err: *mut gvm_jwt_new_secret_err_t,
 ) -> gvm_jwt_encode_secret_t {
-    return gvm_jwt_new_encode_secret(gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_RSA_PEM, pem, err);
+    unsafe {
+        gvm_jwt_new_encode_secret(gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_RSA_PEM, pem, err)
+    }
 }
 
 /// Free a JWT encode secret
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_encode_secret_free(secret: gvm_jwt_encode_secret_t) {
+pub unsafe extern "C" fn gvm_jwt_encode_secret_free(secret: gvm_jwt_encode_secret_t) {
     if !(secret.is_null()) {
         let boxed_secret = unsafe { Box::from_raw(secret) };
         drop(boxed_secret);
@@ -308,8 +352,11 @@ pub enum gvm_jwt_generate_token_err_t {
 }
 
 /// Create a JWT for a given secret, user_id and validity
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_generate_token(
+pub unsafe extern "C" fn gvm_jwt_generate_token(
     secret: gvm_jwt_encode_secret_t,
     user_id: *const c_char,
     valid_seconds: i64,
@@ -352,10 +399,10 @@ pub extern "C" fn gvm_jwt_generate_token(
         err,
         gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_OK
     );
-    return rs_string_to_c_ptr(token);
+    rs_string_to_c_ptr(token)
 }
 
-/// Enum specifying an error from `gvm_jwt_validate_token`
+/// Enum specifying an error from `gvm_jwt_validate_token
 #[repr(C)]
 #[allow(non_camel_case_types)]
 pub enum gvm_jwt_validate_token_err_t {
@@ -379,8 +426,11 @@ pub enum gvm_jwt_validate_token_err_t {
 ///
 /// If a user_id is also given, it is compared to the subject
 /// in the token claims.
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_validate_token(
+pub unsafe extern "C" fn gvm_jwt_validate_token(
     secret: gvm_jwt_decode_secret_t,
     token: *const c_char,
     user_id: *const c_char,
@@ -397,19 +447,23 @@ pub extern "C" fn gvm_jwt_validate_token(
 
     let claims: Claims = match validate_token(rs_secret, &token_str) {
         Ok(v) => v,
-        Err(_e) => return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_VALIDATION_FAILED,
+        Err(_e) => {
+            return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_VALIDATION_FAILED;
+        }
     };
 
     if !(user_id.is_null()) {
         let sub = unsafe { CStr::from_ptr(user_id) };
         let sub = match sub.to_str() {
             Ok(s) => s.to_string(),
-            Err(_e) => return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_INVALID_USER_ID,
+            Err(_e) => {
+                return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_INVALID_USER_ID;
+            }
         };
         if sub != claims.sub {
             return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_USER_ID_MISMATCH;
         }
     }
 
-    return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_OK;
+    gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_OK
 }

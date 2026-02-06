@@ -6,8 +6,11 @@ use std::ffi::{CString, c_char};
 use std::ptr::null_mut;
 
 /// Free a string created by rs_string_to_c_ptr / CString::from_raw.
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_auth_str_free(ptr: *mut c_char) {
+pub unsafe extern "C" fn gvm_auth_str_free(ptr: *mut c_char) {
     if !(ptr.is_null()) {
         unsafe {
             drop(CString::from_raw(ptr));
@@ -21,5 +24,5 @@ pub fn rs_string_to_c_ptr(value: String) -> *mut c_char {
         Ok(s) => s,
         Err(_e) => return null_mut(),
     };
-    return c_string.into_raw();
+    c_string.into_raw()
 }
