@@ -465,7 +465,8 @@ mod tests {
                 .path("/token")
                 .body_includes("scope=")
                 .body_includes("a")
-                .body_includes("b");
+                .body_includes("b")
+                .body_includes("c");
             then.status(200)
                 .header("content-type", "application/json")
                 .body(r#"{"access_token":"t1","token_type":"bearer","expires_in":3600}"#);
