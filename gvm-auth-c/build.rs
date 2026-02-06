@@ -18,7 +18,7 @@ fn main() {
         .expect("Could not get parent workspace path");
     let build_dir = &workspace_dir.join("target").join(&profile);
 
-    let header_output_path = build_dir.join("gvm_auth_c_lib.h");
+    let header_output_path = build_dir.join("gvm_auth.h");
 
     if has_headers_feature {
         info!(
@@ -29,7 +29,7 @@ fn main() {
             .with_crate(crate_dir)
             .with_language(cbindgen::Language::C)
             .with_pragma_once(true)
-            .with_include_guard("_GVM_AUTH_LIB")
+            .with_include_guard("_GVM_AUTH")
             .with_header(include_str!("c_header_top.txt"))
             .with_documentation(true)
             .generate()

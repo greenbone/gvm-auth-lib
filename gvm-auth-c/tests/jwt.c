@@ -11,7 +11,7 @@
 #include <cgreen/cgreen.h>
 #include <cgreen/mocks.h>
 
-#include <gvm_auth_c_lib.h>
+#include <gvm_auth.h>
 #include <test_data.h>
 
 Describe (jwt);
