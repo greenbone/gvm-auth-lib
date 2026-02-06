@@ -1,5 +1,5 @@
 [workspace]
-members = ["gvm-auth-c-lib", "gvm-auth-cli", "gvm-auth-lib"]
+members = [ "gvm-auth", "gvm-auth-c-lib", "gvm-auth-cli" ]
 resolver = "3"
 
 [workspace.package]
@@ -10,7 +10,7 @@ repository = "https://github.com/greenbone/gvm-auth-lib"
 license = "AGPL-3.0-or-later"
 
 [workspace.dependencies]
-gvm-auth-lib = { path = "./gvm-auth-lib" }
+gvm-auth = { path = "./gvm-auth" }
 chrono = "0.4.43"
 clap = { version = "4.5.54", features = ["derive", "env"] }
 jsonwebtoken = { version = "10.3.0", features = ["aws_lc_rs"] }

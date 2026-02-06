@@ -14,7 +14,7 @@ default = ["headers"]
 headers = []
 
 [dependencies]
-gvm-auth-lib = { workspace = true }
+gvm-auth = { workspace = true }
 chrono = { workspace = true }
 jsonwebtoken = { workspace = true }
 serde = { workspace = true }
