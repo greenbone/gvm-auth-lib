@@ -10,6 +10,6 @@ license.workspace = true
 name = "gvm-auth-cli"
 
 [dependencies]
-gvm-auth-lib = { workspace = true }
+gvm-auth = { workspace = true }
 chrono = { workspace = true }
 clap = { workspace = true }

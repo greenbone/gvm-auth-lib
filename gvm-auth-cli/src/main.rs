@@ -8,7 +8,7 @@
 //! of the GVM authentication libary `gvm-auth-lib`.
 
 use chrono::Duration;
-use gvm_auth_lib::jwt::{Claims, JwtEncodeSecret, generate_token};
+use gvm_auth::jwt::{Claims, JwtEncodeSecret, generate_token};
 mod cliparser;
 use crate::cliparser::{CliArgs, Commands};
 

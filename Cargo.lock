@@ -298,6 +298,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "gvm-auth"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "jsonwebtoken",
+ "serde",
+]
+
+[[package]]
 name = "gvm-auth-c-lib"
 version = "0.1.0"
 dependencies = [
@@ -305,7 +314,7 @@ dependencies = [
  "cbindgen",
  "cc",
  "chrono",
- "gvm-auth-lib",
+ "gvm-auth",
  "jsonwebtoken",
  "serde",
 ]
@@ -316,16 +325,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "clap",
- "gvm-auth-lib",
-]
-
-[[package]]
-name = "gvm-auth-lib"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "jsonwebtoken",
- "serde",
+ "gvm-auth",
 ]
 
 [[package]]

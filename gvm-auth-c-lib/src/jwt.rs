@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use crate::strings::rs_string_to_c_ptr;
-use gvm_auth_lib::jwt::{Claims, JwtDecodeSecret, JwtEncodeSecret, generate_token, validate_token};
+use gvm_auth::jwt::{Claims, JwtDecodeSecret, JwtEncodeSecret, generate_token, validate_token};
 
 use chrono::TimeDelta;
 use std::ffi::{CStr, c_char};
