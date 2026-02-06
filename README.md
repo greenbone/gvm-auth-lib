@@ -11,22 +11,22 @@ The library is mostly implemented in Rust but a wrapper for use in C is also
 included.
 The components are organized as a Rust workspace consisting of multiple crates.
 
-## Main Rust library (gvm-auth-lib)
+## Main Rust library (gvm-auth)
 
-The `gvm-auth-lib` crate is the main library for use in Rust.
-
-It can be built with the standard Cargo command
-```
-cargo build -p gvm-auth-lib
-```
-
-## C wrapper library (gvm-auth-c-lib)
-
-The `gvm-auth-c-lib` crate is a wrapper of the library for use in C.
+The `gvm-auth` crate is the main library for use in Rust.
 
 It can be built with the standard Cargo command
 ```
-cargo build -p gvm-auth-c-lib
+cargo build -p gvm-auth
+```
+
+## C wrapper library (gvm-auth-c)
+
+The `gvm-auth-c` crate is a wrapper of the library for use in C.
+
+It can be built with the standard Cargo command
+```
+cargo build -p gvm-auth-c
 ```
 
 In case of build-time errors, it can be useful to exclude the C header file
@@ -36,7 +36,7 @@ cbindgen.
 To do this, you can disable the default features when building the crate:
 
 ```
-cargo build -p gvm-auth-c-lib --no-default-features
+cargo build -p gvm-auth-c --no-default-features
 ```
 
 ### Cgreen tests
