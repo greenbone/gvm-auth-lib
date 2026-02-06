@@ -8,17 +8,7 @@ use gvm_auth::jwt::{Claims, JwtDecodeSecret, JwtEncodeSecret, generate_token, va
 use chrono::TimeDelta;
 use std::ffi::{CStr, c_char};
 use std::ptr::null_mut;
-
-/// Macro to set error return value
-macro_rules! set_err {
-    ($err: expr, $val: expr) => {
-        if !($err.is_null()) {
-            unsafe {
-                *$err = $val;
-            }
-        }
-    };
-}
+use crate::set_err;
 
 /// Opaque C wrapper for the JwtDecodeSecret type
 #[allow(non_camel_case_types)]

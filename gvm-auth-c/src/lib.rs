@@ -6,5 +6,9 @@
 //! The `gvm-auth-c-lib` crate is a wrapper of the GVM authentication library
 //! `gvm-auth-lib` for use in C.
 
+#[macro_use]
 pub mod jwt;
 pub mod strings;
+#[macro_use]
+pub mod oauth2;
+mod c_ffi_macros;
