@@ -5,8 +5,7 @@
 cmake_minimum_required(VERSION 3.28)
 project(gvm_auth_lib VERSION 0.1.0 LANGUAGES C)
 
-set(
-    PROJECT_VERSION_STRING
+set(PROJECT_VERSION_STRING
     "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
 )
 
@@ -37,6 +36,9 @@ set(C_LIB_HEADER_PATH ${RUST_BUILD_PATH}/gvm_auth.h)
 set(TEST_DATA_DIR ${CMAKE_SOURCE_DIR}/test-data)
 set(TEST_HEADER_PATH ${TEST_DATA_DIR}/test_data.h)
 
+set(RUST_TEST_SERVER_BIN_NAME gvm-auth-test-server${CMAKE_EXECUTABLE_SUFFIX})
+set(RUST_TEST_SERVER_BIN_PATH ${RUST_BUILD_PATH}/${RUST_TEST_SERVER_BIN_NAME})
+
 # Rust sources
 
 set(LIB_RUST_SRC_FILES ${AUTH_LIB_DIR}/src/jwt.rs ${AUTH_LIB_DIR}/src/lib.rs)
@@ -61,6 +63,17 @@ add_custom_command(
 add_custom_target(c-lib DEPENDS ${C_LIB_BUILD_PATH})
 
 include_directories(${RUST_BUILD_PATH} ${TEST_DATA_DIR})
+
+add_custom_command(
+    OUTPUT ${RUST_TEST_SERVER_BIN_PATH}
+    COMMAND
+        ${CARGO_BUILD_CMD} --manifest-path ${RUST_BASE_DIR}/Cargo.toml -p
+        gvm-auth-c --bin gvm-auth-test-server
+    DEPENDS ${AUTH_C_LIB_DIR}/src/bin/gvm_auth_test_server.rs
+    USES_TERMINAL
+)
+
+add_custom_target(rust-test-server DEPENDS ${RUST_TEST_SERVER_BIN_PATH})
 
 # Installation
 
@@ -113,4 +126,19 @@ add_dependencies(test-jwt c-lib)
 target_link_libraries(test-jwt cgreen ${C_LIB_BUILD_PATH})
 add_test(NAME test-jwt COMMAND test-jwt)
 
-add_custom_target(tests DEPENDS test-jwt)
+add_executable(test-oauth2 "${AUTH_C_LIB_DIR}/tests/oauth2.c")
+target_compile_definitions(
+    test-oauth2
+    PRIVATE GVM_AUTH_TEST_SERVER_PATH="${RUST_TEST_SERVER_BIN_PATH}"
+)
+add_dependencies(test-oauth2 c-lib rust-test-server)
+target_link_libraries(test-oauth2 cgreen ${C_LIB_BUILD_PATH})
+add_test(
+    NAME test-oauth2
+    COMMAND
+        ${CMAKE_COMMAND} -E env
+        GVM_AUTH_TEST_SERVER=${RUST_TEST_SERVER_BIN_PATH}
+        $<TARGET_FILE:test-oauth2>
+)
+
+add_custom_target(tests DEPENDS test-jwt test-oauth2)
