@@ -10,6 +10,10 @@ license.workspace = true
 crate-type = ["cdylib"]
 name = "gvm_auth"
 
+[[bin]]
+name = "gvm-auth-test-server"
+path = "src/bin/gvm_auth_test_server.rs"
+
 [features]
 default = ["headers"]
 headers = []
@@ -19,6 +23,7 @@ gvm-auth = { workspace = true }
 chrono = { workspace = true }
 jsonwebtoken = { workspace = true }
 serde = { workspace = true }
+tiny_http = { workspace = true }
 
 [build-dependencies]
 build-print = "1.0.1"
