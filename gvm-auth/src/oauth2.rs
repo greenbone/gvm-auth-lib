@@ -8,7 +8,6 @@ use oauth2::reqwest;
 use oauth2::{
     AuthUrl, ClientId, ClientSecret, EndpointNotSet, EndpointSet, Scope, TokenResponse, TokenUrl,
 };
-use std::sync::Arc;
 use thiserror::Error;
 use url;
 
@@ -51,17 +50,43 @@ type ConfiguredBasicClient =
     BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 
 #[derive(Debug)]
-pub struct OAuth2TokenProvider {
+pub struct OAuth2TokenProvider<C: Clock = SystemClock> {
     config: ClientCredentialsConfig,
     client: ConfiguredBasicClient,
     cache: tokio::sync::RwLock<Option<CachedToken>>,
-    clock: Arc<dyn Clock>,
+    clock: C,
 }
 
 pub type Result<T> = std::result::Result<T, OAuth2TokenProviderError>;
 
-impl OAuth2TokenProvider {
+impl OAuth2TokenProvider<SystemClock> {
     pub fn new(config: ClientCredentialsConfig) -> Result<Self> {
+        Self::with_clock(config, SystemClock::default())
+    }
+}
+
+impl<C: Clock> OAuth2TokenProvider<C> {
+    pub fn with_clock(config: ClientCredentialsConfig, clock: C) -> Result<Self> {
+        Self::validate_config(&config)?;
+
+        let token_url = TokenUrl::new(config.token_url.clone())?;
+        let auth_url = AuthUrl::new("https://invalid.local/authorize".to_string())
+            .expect("hardcoded url must be valid");
+
+        let client = BasicClient::new(ClientId::new(config.client_id.clone()))
+            .set_client_secret(ClientSecret::new(config.client_secret.clone()))
+            .set_auth_uri(auth_url)
+            .set_token_uri(token_url);
+
+        Ok(Self {
+            config,
+            client,
+            cache: tokio::sync::RwLock::new(None),
+            clock,
+        })
+    }
+
+    fn validate_config(config: &ClientCredentialsConfig) -> Result<()> {
         if config.token_url.trim().is_empty() {
             return Err(OAuth2TokenProviderError::InvalidConfig(
                 "token_url must not be empty",
@@ -77,28 +102,7 @@ impl OAuth2TokenProvider {
                 "client_secret must not be empty",
             ));
         }
-
-        let token_url = TokenUrl::new(config.token_url.clone())?;
-        let auth_url = AuthUrl::new("https://invalid.local/authorize".to_string())
-            .expect("hardcoded url must be valid");
-
-        let client = BasicClient::new(ClientId::new(config.client_id.clone()))
-            .set_client_secret(ClientSecret::new(config.client_secret.clone()))
-            .set_auth_uri(auth_url)
-            .set_token_uri(token_url);
-
-        Ok(Self {
-            config,
-            client,
-            cache: tokio::sync::RwLock::new(None),
-            clock: Arc::new(SystemClock::default()),
-        })
-    }
-
-    pub fn with_clock(config: ClientCredentialsConfig, clock: Arc<dyn Clock>) -> Result<Self> {
-        let mut p = Self::new(config)?;
-        p.clock = clock;
-        Ok(p)
+        Ok(())
     }
 
     pub fn refresh_skew(&self) -> u64 {
