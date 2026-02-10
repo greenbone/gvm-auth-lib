@@ -12,7 +12,7 @@ license = "GPL-3.0-or-later"
 [workspace.dependencies]
 gvm-auth = { path = "./gvm-auth" }
 chrono = "0.4.43"
-clap = { version = "4.5.54", features = ["derive", "env"] }
+clap = { version = "4.5.57", features = ["derive", "env"] }
 jsonwebtoken = { version = "10.3.0", features = ["aws_lc_rs"] }
 oauth2 = { version = "5.0.0", features = ["reqwest", "reqwest-blocking"] }
 serde = { version = "1.0.228", features = ["derive"] }
