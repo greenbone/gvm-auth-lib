@@ -20,9 +20,9 @@ fn main() {
         .and_then(|s| s.parse().ok())
         .unwrap_or(200);
 
-    let body = env::var("TEST_HTTP_BODY").unwrap_or_else(|_| {
+    let body = env::var("TEST_HTTP_BODY").unwrap_or(
         r#"{"access_token":"t1","token_type":"bearer","expires_in":3600}"#.to_string()
-    });
+    );
 
     // If not set, use 0 (ephemeral port).
     let bind_port: u16 = env::var("TEST_HTTP_PORT")
