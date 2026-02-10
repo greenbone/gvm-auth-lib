@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Greenbone AG
 //
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 //! Minimal HTTP server used by CGreen tests for the gvm-auth-c OAuth2 wrapper.
 //!
