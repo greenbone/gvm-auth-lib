@@ -43,7 +43,8 @@ fn main() {
 
     if req.method() != &Method::Post || req.url() != "/token" {
         let r = Response::from_string(r#"{"error":"not_found"}"#)
-            .with_status_code(404);
+            .with_status_code(404)
+            .with_header(Header::from_bytes("Content-Type", "application/json").unwrap());
         let _ = req.respond(r);
         return;
     }
