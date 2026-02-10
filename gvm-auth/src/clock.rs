@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Greenbone AG
 //
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::fmt::Debug;
 use std::sync::Arc;
