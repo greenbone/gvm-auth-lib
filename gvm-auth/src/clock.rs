@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use std::fmt::Debug;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -22,6 +23,12 @@ impl Clock for SystemClock {
     }
 }
 
+impl<T: Clock> Clock for Arc<T> {
+    fn now(&self) -> u64 {
+        T::now(&**self)
+    }
+}
+
 #[derive(Debug)]
 pub struct ManualClock {
     now: AtomicU64,
@@ -35,17 +42,17 @@ impl ManualClock {
     }
 
     pub fn set(&self, unix: u64) {
-        self.now.store(unix, Ordering::SeqCst);
+        self.now.store(unix, Ordering::Relaxed);
     }
 
     pub fn advance(&self, secs: u64) {
-        self.now.fetch_add(secs, Ordering::SeqCst);
+        self.now.fetch_add(secs, Ordering::Relaxed);
     }
 }
 
 impl Clock for ManualClock {
     fn now(&self) -> u64 {
-        self.now.load(Ordering::SeqCst)
+        self.now.load(Ordering::Relaxed)
     }
 }
 
@@ -55,12 +62,14 @@ mod tests {
 
     #[test]
     fn manual_clock_new_returns_initial_time() {
-        let clock = ManualClock::new(0);
-        assert_eq!(clock.now(), 0);
+        let c = ManualClock::new(0);
+        assert_eq!(c.now(), 0);
     }
+
     #[test]
     fn manual_clock_set_overwrites_time() {
         let c = ManualClock::new(10);
+
         c.set(999);
         assert_eq!(c.now(), 999);
 
@@ -71,6 +80,7 @@ mod tests {
     #[test]
     fn manual_clock_advance_increases_time() {
         let c = ManualClock::new(100);
+
         c.advance(5);
         assert_eq!(c.now(), 105);
 
@@ -93,6 +103,12 @@ mod tests {
         let t2 = c.now();
 
         assert!(t2 >= t1, "expected t2 >= t1, got t1={t1}, t2={t2}");
+    }
+
+    #[test]
+    fn arc_clock_delegates_to_inner_clock() {
+        let c: Arc<ManualClock> = Arc::new(ManualClock::new(7));
+        assert_eq!(c.now(), 7);
     }
 
     #[test]
