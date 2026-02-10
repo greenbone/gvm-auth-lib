@@ -1,5 +1,5 @@
 [workspace]
-members = [ "gvm-auth", "gvm-auth-c", "gvm-auth-cli" ]
+members = ["gvm-auth", "gvm-auth-c", "gvm-auth-cli"]
 resolver = "3"
 
 [workspace.package]
@@ -7,7 +7,7 @@ version = "0.1.0"
 edition = "2024"
 description = "Authentication library for Greenbone Vulnerability Manager"
 repository = "https://github.com/greenbone/gvm-auth-lib"
-license = "AGPL-3.0-or-later"
+license = "GPL-3.0-or-later"
 
 [workspace.dependencies]
 gvm-auth = { path = "./gvm-auth" }

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Greenbone AG
 //
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 use crate::strings::rs_string_to_c_ptr;
 use gvm_auth::jwt::{Claims, JwtDecodeSecret, JwtEncodeSecret, generate_token, validate_token};

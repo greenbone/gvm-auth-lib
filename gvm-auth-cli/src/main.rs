@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Greenbone AG
 //
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 //! # gvm-auth-cli
 //!
 //! `gvm-auth-cli` is a command line tool for testing various functions
-//! of the GVM authentication libary `gvm-auth-lib`.
+//! of the GVM authentication library `gvm-auth-lib`.
 
 use chrono::Duration;
 use gvm_auth::jwt::{Claims, JwtEncodeSecret, generate_token};
