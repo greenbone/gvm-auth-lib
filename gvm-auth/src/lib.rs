@@ -9,6 +9,6 @@
 //! the generation of JSON Web Tokens and communicating with authentication
 //! APIs like OAuth and OpenID Connect.
 
-pub mod jwt;
 pub mod clock;
+pub mod jwt;
 pub mod oauth2;
