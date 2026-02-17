@@ -77,7 +77,7 @@ jobs:
       - name: Check CMake Format
         id: check
         run: |
-          gersemi --check . cmake
+          gersemi --check .
       - name: Report Diff
         if: ${{ failure() && steps.check.outcome == 'failure' }}
         run: |
