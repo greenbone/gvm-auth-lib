@@ -33,7 +33,7 @@ fn main() {
 
     let server = Server::http(&bind_addr).expect("bind");
     let addr = server.server_addr().to_string();
-    let port = addr.split(':').last().unwrap();
+    let port = addr.split(':').next_back().unwrap();
 
     println!("PORT={}", port);
     io::stdout().flush().unwrap();

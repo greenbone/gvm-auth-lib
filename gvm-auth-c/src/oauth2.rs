@@ -137,7 +137,7 @@ pub unsafe extern "C" fn gvm_oauth2_token_provider_new(
     } else {
         match unsafe { CStr::from_ptr(scopes).to_str() } {
             Ok(s) => s
-                .split(|c| c == ' ' || c == ',' || c == ';')
+                .split([' ', ',', ';'])
                 .map(|x| x.trim())
                 .filter(|x| !x.is_empty())
                 .map(|x| x.to_string())
