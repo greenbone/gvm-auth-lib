@@ -1,0 +1,93 @@
+name: "Build and run unit tests"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-run-unit-tests:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Install cgreen
+        run: |
+          apt-get update \
+          && apt-get install -y --no-install-recommends  --no-install-suggests \
+            libcgreen1-dev
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Setup Rust
+        uses: greenbone/actions/setup-rust@v3
+      - name: Build Rust library
+        run: cargo build --lib --workspace
+      - name: Build and run Rust unit tests
+        run: cargo test --lib --tests --workspace
+      - name: Prepare C build dir
+        run: |
+          cmake -B build .
+      - name: Build C library
+        run: |
+          cmake --build build
+      - name: Build and run C unit test
+        run: |
+          cmake --build build --target tests test
+
+  rust-linting:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Setup Rust
+        uses: greenbone/actions/setup-rust@v3
+      - name: Run Rust linter
+        run: cargo clippy --workspace -- -D warnings
+
+  rust-format-check:
+    name: Check Rust Source Code Formatting
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Setup Rust
+        uses: greenbone/actions/setup-rust@v3
+      - name: Check Rust Format
+        id: check
+        run: |
+          cargo fmt --all -- --check
+      - name: Report Diff
+        if: ${{ failure() && steps.check.outcome == 'failure' }}
+        run: |
+          echo "## Rust Format Check" >> $GITHUB_STEP_SUMMARY
+          echo "Found formatting issues in the source code. Please run cargo fmt to fix them." >> $GITHUB_STEP_SUMMARY
+          echo '```sh' >> $GITHUB_STEP_SUMMARY
+          echo 'cargo fmt --all' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  cmake-format-check:
+    name: Check CMake Formatting
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: greenbone/actions/uv@v3
+        with:
+          install: gersemi
+      - name: Check CMake Format
+        id: check
+        run: |
+          gersemi --check . cmake
+      - name: Report Diff
+        if: ${{ failure() && steps.check.outcome == 'failure' }}
+        run: |
+          echo "## CMake Format Check" >> $GITHUB_STEP_SUMMARY
+          gersemi --check --no-warn-about-unknown-commands . >> $GITHUB_STEP_SUMMARY 2>&1 || true
+          echo "Found formatting issues in the source code. Please run gersemi to fix them." >> $GITHUB_STEP_SUMMARY
+          echo '```sh' >> $GITHUB_STEP_SUMMARY
+          echo 'gersemi -i .' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "## CMake Format Diff" >> $GITHUB_STEP_SUMMARY
+          echo '```diff' >> $GITHUB_STEP_SUMMARY
+          gersemi --diff . >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
