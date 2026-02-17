@@ -6,9 +6,11 @@
 #[macro_export]
 macro_rules! set_err {
     ($err: expr, $val: expr) => {
-        if !($err.is_null()) {
+        let err = $err;
+        let val = $val;
+        if !(err.is_null()) {
             unsafe {
-                *$err = $val;
+                *err = val;
             }
         }
     };

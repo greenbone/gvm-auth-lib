@@ -61,7 +61,7 @@ pub type Result<T> = std::result::Result<T, OAuth2TokenProviderError>;
 
 impl OAuth2TokenProvider<SystemClock> {
     pub fn new(config: ClientCredentialsConfig) -> Result<Self> {
-        Self::with_clock(config, SystemClock::default())
+        Self::with_clock(config, SystemClock)
     }
 }
 
