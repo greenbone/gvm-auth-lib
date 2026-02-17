@@ -5,10 +5,10 @@
 use crate::strings::rs_string_to_c_ptr;
 use gvm_auth::jwt::{Claims, JwtDecodeSecret, JwtEncodeSecret, generate_token, validate_token};
 
+use crate::set_err;
 use chrono::TimeDelta;
 use std::ffi::{CStr, c_char};
 use std::ptr::null_mut;
-use crate::set_err;
 
 /// Opaque C wrapper for the JwtDecodeSecret type
 #[allow(non_camel_case_types)]

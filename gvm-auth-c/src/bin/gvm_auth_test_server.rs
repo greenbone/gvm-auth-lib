@@ -10,8 +10,8 @@
 //! - TEST_HTTP_BODY: JSON response body (default: access_token payload)
 //! - TEST_HTTP_PORT: bind port (default: 0 for ephemeral)
 
-use std::{env, io};
 use std::io::Write;
+use std::{env, io};
 use tiny_http::{Header, Method, Response, Server};
 
 fn main() {
@@ -20,9 +20,8 @@ fn main() {
         .and_then(|s| s.parse().ok())
         .unwrap_or(200);
 
-    let body = env::var("TEST_HTTP_BODY").unwrap_or(
-        r#"{"access_token":"t1","token_type":"bearer","expires_in":3600}"#.to_string()
-    );
+    let body = env::var("TEST_HTTP_BODY")
+        .unwrap_or(r#"{"access_token":"t1","token_type":"bearer","expires_in":3600}"#.to_string());
 
     // If not set, use 0 (ephemeral port).
     let bind_port: u16 = env::var("TEST_HTTP_PORT")
