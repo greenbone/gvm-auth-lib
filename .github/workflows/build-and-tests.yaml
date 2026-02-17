@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   build-and-run-unit-tests:
+    name: Build and run unit tests
     runs-on: "ubuntu-latest"
     steps:
       - name: Install cgreen
@@ -40,6 +41,7 @@ jobs:
           cmake --build build --target tests test
 
   rust-linting:
+    name: Run Rust Linter
     runs-on: "ubuntu-latest"
     steps:
       - name: Check out repository
