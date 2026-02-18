@@ -66,7 +66,7 @@ set(
   ${CMAKE_SHARED_LIBRARY_PREFIX}gvm_auth${CMAKE_SHARED_LIBRARY_SUFFIX}
 )
 set(C_LIB_BUILD_PATH ${RUST_BUILD_PATH}/${C_LIB_FILENAME})
-set(C_LIB_HEADER_PATH ${RUST_BUILD_PATH}/gvm_auth.h)
+set(C_LIB_HEADER_PATH ${RUST_BUILD_PATH}/gvm-auth.h)
 
 set(TEST_DATA_DIR ${CMAKE_SOURCE_DIR}/test-data)
 set(TEST_HEADER_PATH ${TEST_DATA_DIR}/test_data.h)
@@ -80,8 +80,10 @@ set(LIB_RUST_SRC_FILES ${AUTH_LIB_DIR}/src/jwt.rs ${AUTH_LIB_DIR}/src/lib.rs)
 
 set(
   C_LIB_RUST_SRC_FILES
+  ${AUTH_C_LIB_DIR}/build.rs
   ${AUTH_C_LIB_DIR}/src/jwt.rs
   ${AUTH_C_LIB_DIR}/src/lib.rs
+  ${AUTH_C_LIB_DIR}/src/oauth2.rs
   ${AUTH_C_LIB_DIR}/src/strings.rs
 )
 
@@ -148,24 +150,5 @@ install(
 
 # C Tests
 if(BUILD_TESTING)
-  add_executable(test-jwt "${AUTH_C_LIB_DIR}/tests/jwt.c")
-  add_dependencies(test-jwt c-lib)
-  target_link_libraries(test-jwt ${CGREEN_LIBRARIES} ${C_LIB_BUILD_PATH})
-  add_test(NAME test-jwt COMMAND test-jwt)
-
-  add_executable(test-oauth2 "${AUTH_C_LIB_DIR}/tests/oauth2.c")
-  target_compile_definitions(
-    test-oauth2
-    PRIVATE GVM_AUTH_TEST_SERVER_PATH="${RUST_TEST_SERVER_BIN_PATH}"
-  )
-  add_dependencies(test-oauth2 c-lib rust-test-server)
-  target_link_libraries(test-oauth2 ${CGREEN_LIBRARIES} ${C_LIB_BUILD_PATH})
-  add_test(
-    NAME test-oauth2
-    COMMAND
-      ${CMAKE_COMMAND} -E env GVM_AUTH_TEST_SERVER=${RUST_TEST_SERVER_BIN_PATH}
-      $<TARGET_FILE:test-oauth2>
-  )
-
-  add_custom_target(tests DEPENDS test-jwt test-oauth2)
+  add_subdirectory(tests)
 endif()
