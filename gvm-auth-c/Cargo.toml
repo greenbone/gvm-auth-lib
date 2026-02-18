@@ -28,7 +28,7 @@ tiny_http = { workspace = true }
 [build-dependencies]
 build-print = "1.0.1"
 cbindgen = "0.29.2"
-cc = "1.2.55"
+cc = "1.2.56"
 
 [dev-dependencies]
 httpmock = "0.8.3"
