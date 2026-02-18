@@ -9,6 +9,8 @@
 //! the generation of JSON Web Tokens and communicating with authentication
 //! APIs like OAuth and OpenID Connect.
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub mod clock;
 pub mod jwt;
 pub mod oauth2;

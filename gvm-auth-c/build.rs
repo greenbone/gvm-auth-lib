@@ -11,6 +11,10 @@ fn main() {
     let profile = env::var("PROFILE").unwrap();
     let cargo_manifest_dir_env = env::var("CARGO_MANIFEST_DIR").unwrap();
     let has_headers_feature = env::var("CARGO_FEATURE_HEADERS").is_ok();
+    let version_define = format!(
+        "\n#ifndef GVM_AUTH_VERSION\n#define GVM_AUTH_VERSION \"{}\"\n#endif\n",
+        env!("CARGO_PKG_VERSION")
+    );
 
     let crate_dir = Path::new(&cargo_manifest_dir_env);
     let workspace_dir = &crate_dir
@@ -32,6 +36,7 @@ fn main() {
             .with_include_guard("_GVM_AUTH")
             .with_header(include_str!("c_header_top.txt"))
             .with_documentation(true)
+            .with_after_include(version_define)
             .generate()
             .expect("Unable to generate C bindings")
             .write_to_file(header_output_path);
