@@ -111,7 +111,7 @@ add_custom_command(
   USES_TERMINAL
 )
 
-add_custom_target(c-lib DEPENDS ${C_LIB_BUILD_PATH})
+add_custom_target(c-lib ALL DEPENDS ${C_LIB_BUILD_PATH})
 
 # Installation
 
