@@ -13,6 +13,13 @@ foreach(line ${CARGO_TOML_CONTENT})
   endif()
 endforeach()
 
+if(NOT GVM_AUTH_LIB_VERSION)
+  message(
+    FATAL_ERROR
+    "Could not extract version from ${RUST_BASE_DIR}/Cargo.toml"
+  )
+endif()
+
 project(gvm-auth-lib VERSION ${GVM_AUTH_LIB_VERSION} LANGUAGES C)
 
 ## Retrieve git revision (at configure time)
