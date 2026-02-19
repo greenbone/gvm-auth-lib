@@ -29,7 +29,7 @@ fn main() {
             "Generating header file ({})...",
             header_output_path.display()
         );
-        cbindgen::Builder::new()
+        let result = cbindgen::Builder::new()
             .with_crate(crate_dir)
             .with_language(cbindgen::Language::C)
             .with_pragma_once(true)
@@ -40,5 +40,11 @@ fn main() {
             .generate()
             .expect("Unable to generate C bindings")
             .write_to_file(header_output_path);
+
+        if result {
+            // Instruct Cargo to rerun the build script if relevant files change
+            println!("cargo:rerun-if-changed=src");
+            println!("cargo:rerun-if-changed=c_header_top.txt");
+        }
     }
 }

@@ -83,15 +83,19 @@ set(RUST_TEST_SERVER_BIN_PATH ${RUST_BUILD_PATH}/${RUST_TEST_SERVER_BIN_NAME})
 
 # Rust sources
 
+file(
+  GLOB_RECURSE LIB_RUST_SRC_FILES
+  ${AUTH_LIB_DIR}/Cargo.toml
+  ${AUTH_LIB_DIR}/src/**.rs
+)
 set(LIB_RUST_SRC_FILES ${AUTH_LIB_DIR}/src/jwt.rs ${AUTH_LIB_DIR}/src/lib.rs)
 
-set(
-  C_LIB_RUST_SRC_FILES
+file(
+  GLOB_RECURSE C_LIB_RUST_SRC_FILES
+  ${AUTH_C_LIB_DIR}/c_header_top.txt
+  ${AUTH_C_LIB_DIR}/Cargo.toml
   ${AUTH_C_LIB_DIR}/build.rs
-  ${AUTH_C_LIB_DIR}/src/jwt.rs
-  ${AUTH_C_LIB_DIR}/src/lib.rs
-  ${AUTH_C_LIB_DIR}/src/oauth2.rs
-  ${AUTH_C_LIB_DIR}/src/strings.rs
+  ${AUTH_C_LIB_DIR}/src/**.rs
 )
 
 # Rust / Cargo targets
@@ -100,7 +104,10 @@ add_custom_command(
   OUTPUT ${C_LIB_BUILD_PATH}
   COMMAND
     ${CARGO_BUILD_CMD} --manifest-path ${RUST_BASE_DIR}/Cargo.toml -p gvm-auth-c
-  DEPENDS ${LIB_RUST_SRC_FILES} ${C_LIB_RUST_SRC_FILES}
+  DEPENDS
+    ${RUST_BASE_DIR}/Cargo.toml
+    ${LIB_RUST_SRC_FILES}
+    ${C_LIB_RUST_SRC_FILES}
   USES_TERMINAL
 )
 
