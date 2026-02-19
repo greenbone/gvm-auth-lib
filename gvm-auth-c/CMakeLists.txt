@@ -113,19 +113,6 @@ add_custom_command(
 
 add_custom_target(c-lib DEPENDS ${C_LIB_BUILD_PATH})
 
-include_directories(${RUST_BUILD_PATH} ${TEST_DATA_DIR})
-
-add_custom_command(
-  OUTPUT ${RUST_TEST_SERVER_BIN_PATH}
-  COMMAND
-    ${CARGO_BUILD_CMD} --manifest-path ${RUST_BASE_DIR}/Cargo.toml -p gvm-auth-c
-    --bin gvm-auth-test-server
-  DEPENDS ${AUTH_C_LIB_DIR}/src/bin/gvm_auth_test_server.rs
-  USES_TERMINAL
-)
-
-add_custom_target(rust-test-server DEPENDS ${RUST_TEST_SERVER_BIN_PATH})
-
 # Installation
 
 if(NOT LIBDIR)
