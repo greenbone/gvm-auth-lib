@@ -1,0 +1,23 @@
+name: Deploy on crates.io
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    name: Deploy gvm-auth-lib to crates.io
+    runs-on: ubuntu-latest
+    environment:
+      name: "crates.io"
+      url: https://crates.io/crates/gvm-auth
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Setup Rust
+        uses: greenbone/actions/setup-rust@v3
+      - name: Publish to crates.io
+        run: |
+          cargo publish --package gvm-auth --package gvm-auth-cli
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
