@@ -11,13 +11,18 @@ jobs:
     environment:
       name: "crates.io"
       url: https://crates.io/crates/gvm-auth
+    permissions:
+      id-token: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
       - name: Setup Rust
         uses: greenbone/actions/setup-rust@v3
+      - name: Setup Trusted Publishing
+        uses: rust-lang/crates-io-auth-action@b7e9a28eded4986ec6b1fa40eeee8f8f165559ec #v1.0.3
+        id: auth
       - name: Publish to crates.io
         run: |
           cargo publish --package gvm-auth --package gvm-auth-cli
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
