@@ -3,7 +3,7 @@ members = ["gvm-auth", "gvm-auth-c", "gvm-auth-cli"]
 resolver = "3"
 
 [workspace.package]
-version = "0.1.1"
+version = "0.1.2-dev1"
 edition = "2024"
 description = "Authentication library for Greenbone Vulnerability Manager"
 repository = "https://github.com/greenbone/gvm-auth-lib"
