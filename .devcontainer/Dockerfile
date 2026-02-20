@@ -1,4 +1,4 @@
-FROM debian:stable-slim
+FROM rust:latest
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -23,8 +23,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client \
     passwd \
     pkg-config \
-    rustup \
-    gosu \
     sudo
 
 # add non-root user
@@ -32,10 +30,5 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -s /bin/bash \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
-
-RUN gosu $USERNAME rustup update stable \
-    && gosu $USERNAME rustup default stable \
-    && gosu $USERNAME rustup component add clippy rustfmt rust-analyzer
-
 
 CMD ["/bin/bash"]
