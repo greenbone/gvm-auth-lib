@@ -5,6 +5,7 @@ edition.workspace = true
 description = "C Wrapper for the gvm-auth library"
 repository.workspace = true
 license.workspace = true
+readme.workspace = true
 
 [lib]
 crate-type = ["cdylib"]
