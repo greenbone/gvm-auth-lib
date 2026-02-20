@@ -8,6 +8,7 @@ edition = "2024"
 description = "Authentication library for Greenbone Vulnerability Manager"
 repository = "https://github.com/greenbone/gvm-auth-lib"
 license = "GPL-3.0-or-later"
+readme = "README.md"
 
 [workspace.dependencies]
 gvm-auth = { path = "./gvm-auth", version = ">=0.1" }
