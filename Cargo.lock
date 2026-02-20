@@ -566,7 +566,7 @@ dependencies = [
 
 [[package]]
 name = "gvm-auth"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "chrono",
  "httpmock",
@@ -580,7 +580,7 @@ dependencies = [
 
 [[package]]
 name = "gvm-auth-c"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "build-print",
  "cbindgen",
@@ -595,7 +595,7 @@ dependencies = [
 
 [[package]]
 name = "gvm-auth-cli"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "chrono",
  "clap",
