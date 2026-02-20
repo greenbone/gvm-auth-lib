@@ -16,6 +16,10 @@ on:
         type: string
         description: Set an explicit version, that will overwrite release-type. Fails if version is not compliant.
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-release:
     name: Create a new release
@@ -33,6 +37,9 @@ jobs:
           contains(github.event.pull_request.labels.*.name, 'major release')) &&
           github.event.pull_request.merged == true )
     runs-on: "ubuntu-latest"
+    outputs:
+      git-release-tag: ${{ steps.release.outputs.git-release-tag }}
+      release-version: ${{ steps.release-version.outputs.release-version }}
     steps:
       - name: Selecting the Release type
         id: release-type
@@ -52,6 +59,7 @@ jobs:
           release-type: ${{ steps.release-type.outputs.release-type }}
           release-version: ${{ inputs.release-version }}
           versioning-scheme: "semver"
+          project-types: "cargo"
       - name: Install git-cliff
         uses: greenbone/actions/uv@v3
         with:
@@ -69,10 +77,48 @@ jobs:
           github-user: ${{ secrets.GREENBONE_BOT }}
           github-user-mail: ${{ secrets.GREENBONE_BOT_MAIL }}
           github-user-token: ${{ secrets.GREENBONE_BOT_TOKEN }}
-          gpg-key: ${{ secrets.GPG_KEY }}
-          gpg-fingerprint: ${{ secrets.GPG_FINGERPRINT }}
-          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
           release-version: ${{ steps.release-version.outputs.release-version }}
           changelog: /tmp/changelog.md
           ref: ${{ steps.release-type.outputs.release-ref }}
           versioning-scheme: "semver"
+          sign-release-files: "false"
+          project-types: "cargo"
+
+  build-binaries:
+    name: Build binary files and upload to release
+    runs-on: "ubuntu-latest"
+    container: rust:slim-bookworm
+    needs: build-and-release
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.build-and-release.outputs.git-release-tag }}
+      - name: Build project
+        run: |
+          apt-get update && apt-get install -y cmake make gcc libc6-dev
+          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TESTING=OFF -S . -B build
+          cmake --build build
+          DESTDIR=/tmp/install cmake --install build
+      - name: Create tarballs
+        run: |
+          tar -C /tmp/install -czvf gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}.tar.gz .
+      - name: Upload dist files to release
+        run: |
+          gh release upload ${{ needs.build-and-release.outputs.git-release-tag }} gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}.tar.gz
+        env:
+          GH_TOKEN: ${{ secrets.GREENBONE_BOT_TOKEN }}
+
+  sign:
+    runs-on: "ubuntu-latest"
+    needs:
+      - build-and-release
+      - build-binaries
+    steps:
+      - name: Sign release files
+        uses: greenbone/actions/sign-release-files@v3
+        with:
+          gpg-key: ${{ secrets.GPG_KEY }}
+          gpg-fingerprint: ${{ secrets.GPG_FINGERPRINT }}
+          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          release-version: ${{ needs.build-and-release.outputs.release-version }}
+          github-token: ${{ secrets.GREENBONE_BOT_TOKEN }}
