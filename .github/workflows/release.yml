@@ -121,7 +121,7 @@ jobs:
           name: gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}-tarball
       - name: Upload release artifacts to GitHub Release
         run: |
-          gh release upload ${{ needs.build-and-release.outputs.git-release-tag }} gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}.tar.gz
+          gh release upload --repo ${{ github.repository }} ${{ needs.build-and-release.outputs.git-release-tag }} gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}.tar.gz
         env:
           GH_TOKEN: ${{ secrets.GREENBONE_BOT_TOKEN }}
       - name: Sign release files
