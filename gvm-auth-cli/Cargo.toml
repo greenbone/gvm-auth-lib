@@ -1,10 +1,11 @@
 [package]
-name = "gvm-auth-cli" 
+name = "gvm-auth-cli"
 version.workspace = true
 edition.workspace = true
 description = "Basic CLI tools using gvm-auth-lib"
 repository.workspace = true
 license.workspace = true
+readme.workspace = true
 
 [[bin]]
 name = "gvm-auth-cli"
