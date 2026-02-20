@@ -82,6 +82,7 @@ jobs:
           versioning-scheme: "semver"
           sign-release-files: "false"
           project-types: "cargo"
+          next-version: "false"
 
   build-binaries:
     name: Build binary files and upload to release
