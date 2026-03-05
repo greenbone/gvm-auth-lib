@@ -12,6 +12,7 @@
 #include <cgreen/mocks.h>
 #include <gvm_auth.h>
 #include <test_data.h>
+#include <time.h>
 
 Describe (jwt);
 BeforeEach (jwt)
@@ -81,7 +82,7 @@ Ensure (jwt, can_generate_valid_token_from_ecdsa_pem)
   assert_that (token, is_not_null);
   assert_that (token, is_not_equal_to_string (""));
 
-  validate_token_err = gvm_jwt_validate_token (dec_secret, token, "testuser");
+  validate_token_err = gvm_jwt_validate_token (dec_secret, token, NULL);
   assert_that (validate_token_err, is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_OK));
   gvm_jwt_encode_secret_free (enc_secret);
   gvm_jwt_decode_secret_free (dec_secret);
@@ -117,7 +118,7 @@ Ensure (jwt, can_generate_valid_token_from_rsa_pem)
   assert_that (token, is_not_equal_to_string (""));
   assert_that (generate_token_err, is_equal_to (GVM_JWT_GENERATE_TOKEN_ERR_OK));
 
-  validate_token_err = gvm_jwt_validate_token (dec_secret, token, "testuser");
+  validate_token_err = gvm_jwt_validate_token (dec_secret, token, NULL);
   assert_that (validate_token_err, is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_OK));
 
   gvm_jwt_encode_secret_free (enc_secret);
@@ -125,12 +126,13 @@ Ensure (jwt, can_generate_valid_token_from_rsa_pem)
   gvm_auth_str_free (token);
 }
 
-Ensure (jwt, can_validate_subject)
+Ensure (jwt, can_get_token_claims)
 {
   gvm_jwt_encode_secret_t enc_secret;
   gvm_jwt_decode_secret_t dec_secret;
   char *token;
   gvm_jwt_validate_token_err_t validate_token_err;
+  gvm_jwt_claims_t claims;
 
   enc_secret = gvm_jwt_new_shared_encode_secret ("ABCDEF", NULL);
   dec_secret = gvm_jwt_new_shared_decode_secret ("ABCDEF", NULL);
@@ -140,12 +142,19 @@ Ensure (jwt, can_validate_subject)
   validate_token_err = gvm_jwt_validate_token (dec_secret, token, NULL);
   assert_that (validate_token_err, is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_OK));
 
-  validate_token_err = gvm_jwt_validate_token (dec_secret, token, "testuser");
+  validate_token_err = gvm_jwt_validate_token (dec_secret, token, &claims);
   assert_that (validate_token_err, is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_OK));
 
-  validate_token_err = gvm_jwt_validate_token (dec_secret, token, "invalid");
-  assert_that (validate_token_err,
-               is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_USER_ID_MISMATCH));
+  time_t now = time (NULL);
+  assert_that (claims.iat, is_greater_than (now - 10));
+  assert_that (claims.exp, is_greater_than (now - 10));
+  assert_that (claims.exp - claims.iat, is_equal_to (100));
+  assert_that (claims.sub, is_equal_to_string ("testuser"));
+
+  gvm_jwt_claims_reset (&claims);
+  assert_that (claims.exp, is_equal_to (0));
+  assert_that (claims.exp, is_equal_to (0));
+  assert_that (claims.sub, is_null);
 
   gvm_jwt_encode_secret_free (enc_secret);
   gvm_jwt_decode_secret_free (dec_secret);
@@ -170,7 +179,7 @@ Ensure (jwt, rejects_expired_token)
   assert_that (token, is_not_null);
   assert_that (token, is_not_equal_to_string (""));
 
-  validate_token_err = gvm_jwt_validate_token (dec_secret, token, "testuser");
+  validate_token_err = gvm_jwt_validate_token (dec_secret, token, NULL);
   assert_that (validate_token_err,
                is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_VALIDATION_FAILED));
 
@@ -194,7 +203,7 @@ main (int argc, char **argv)
   add_test_with_context (suite, jwt, can_generate_valid_token);
   add_test_with_context (suite, jwt, can_generate_valid_token_from_ecdsa_pem);
   add_test_with_context (suite, jwt, can_generate_valid_token_from_rsa_pem);
-  add_test_with_context (suite, jwt, can_validate_subject);
+  add_test_with_context (suite, jwt, can_get_token_claims);
   add_test_with_context (suite, jwt, rejects_expired_token);
 
   if (argc > 1)

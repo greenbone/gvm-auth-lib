@@ -7,7 +7,7 @@ use gvm_auth::jwt::{Claims, JwtDecodeSecret, JwtEncodeSecret, generate_token, va
 
 use crate::set_err;
 use chrono::TimeDelta;
-use std::ffi::{CStr, c_char};
+use std::ffi::{CStr, CString, c_char};
 use std::ptr::null_mut;
 
 /// Opaque C wrapper for the JwtDecodeSecret type
@@ -392,6 +392,34 @@ pub unsafe extern "C" fn gvm_jwt_generate_token(
     rs_string_to_c_ptr(token)
 }
 
+/// Struct defining JWT claims
+#[repr(C)]
+#[allow(non_camel_case_types)]
+pub struct gvm_jwt_claims_t {
+    /// Subject (user name)
+    pub sub: *mut c_char,
+    /// Expiration Time as Unix timestamp
+    pub exp: u64,
+    /// Issued at as Unix timestamp
+    pub iat: u64,
+}
+
+/// Reset a claims struct, freeing any string fields
+///
+/// # Safety
+/// Pointers must be valid or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn gvm_jwt_claims_reset(claims: *mut gvm_jwt_claims_t) {
+    if !claims.is_null() {
+        unsafe {
+            let _ = CString::from_raw((*claims).sub);
+            (*claims).iat = 0;
+            (*claims).exp = 0;
+            (*claims).sub = null_mut();
+        }
+    }
+}
+
 /// Enum specifying an error from `gvm_jwt_validate_token
 #[repr(C)]
 #[allow(non_camel_case_types)]
@@ -406,16 +434,14 @@ pub enum gvm_jwt_validate_token_err_t {
     GVM_JWT_VALIDATE_TOKEN_ERR_NO_TOKEN = 2,
     /// Failed to validate token
     GVM_JWT_VALIDATE_TOKEN_ERR_VALIDATION_FAILED = 3,
-    /// User id could not be converted to a String
-    GVM_JWT_VALIDATE_TOKEN_ERR_INVALID_USER_ID = 4,
-    /// User id does not match subject in token claims
-    GVM_JWT_VALIDATE_TOKEN_ERR_USER_ID_MISMATCH = 5,
+    /// Token claims do not match expected structure
+    GVM_JWT_VALIDATE_TOKEN_MALFORMED_CLAIMS = 4,
 }
 
 /// Validate a JWT with a given secret.
 ///
-/// If a user_id is also given, it is compared to the subject
-/// in the token claims.
+/// If a non-null claims_out pointer is also given, the referenced struct
+/// will be updated with the claims from the token if it is valid.
 ///
 /// # Safety
 /// Pointers must be valid or null.
@@ -423,7 +449,7 @@ pub enum gvm_jwt_validate_token_err_t {
 pub unsafe extern "C" fn gvm_jwt_validate_token(
     secret: gvm_jwt_decode_secret_t,
     token: *const c_char,
-    user_id: *const c_char,
+    claims_out: *mut gvm_jwt_claims_t,
 ) -> gvm_jwt_validate_token_err_t {
     if secret.is_null() {
         return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_NO_SECRET;
@@ -442,16 +468,17 @@ pub unsafe extern "C" fn gvm_jwt_validate_token(
         }
     };
 
-    if !(user_id.is_null()) {
-        let sub = unsafe { CStr::from_ptr(user_id) };
-        let sub = match sub.to_str() {
-            Ok(s) => s.to_string(),
-            Err(_e) => {
-                return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_INVALID_USER_ID;
-            }
-        };
-        if sub != claims.sub {
-            return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_USER_ID_MISMATCH;
+    if !(claims_out.is_null()) {
+        unsafe {
+            let sub = match CString::new(claims.sub) {
+                Ok(s) => s.into_raw(),
+                Err(_e) => {
+                    return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_MALFORMED_CLAIMS;
+                }
+            };
+            (*claims_out).iat = claims.iat;
+            (*claims_out).exp = claims.exp;
+            (*claims_out).sub = sub;
         }
     }
 
