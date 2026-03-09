@@ -64,21 +64,17 @@ pub enum gvm_jwt_new_secret_err_t {
 
 /// Returns a string describing a given gvm_jwt_new_secret_err_t
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_new_secret_strerror(
-    err: gvm_jwt_new_secret_err_t,
-) -> *const c_char {
+pub extern "C" fn gvm_jwt_new_secret_strerror(err: gvm_jwt_new_secret_err_t) -> *const c_char {
     let err_int = err as i32;
     if err_int < -1 || err_int > 4 {
-       return const_cstr!("unknown error").as_ptr()
+        return const_cstr!("unknown error").as_ptr();
     }
 
     match err {
         gvm_jwt_new_secret_err_t::GVM_JWT_NEW_SECRET_ERR_INTERNAL_ERROR => {
             const_cstr!("internal error").as_ptr()
         }
-        gvm_jwt_new_secret_err_t::GVM_JWT_NEW_SECRET_ERR_OK => {
-            const_cstr!("ok").as_ptr()
-        }
+        gvm_jwt_new_secret_err_t::GVM_JWT_NEW_SECRET_ERR_OK => const_cstr!("ok").as_ptr(),
         gvm_jwt_new_secret_err_t::GVM_JWT_NEW_SECRET_ERR_NO_DATA => {
             const_cstr!("no secret data given").as_ptr()
         }
@@ -382,16 +378,14 @@ pub extern "C" fn gvm_jwt_generate_token_strerror(
 ) -> *const c_char {
     let err_int = err as i32;
     if err_int < -1 || err_int > 3 {
-       return const_cstr!("unknown error").as_ptr()
+        return const_cstr!("unknown error").as_ptr();
     }
 
     match err {
         gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_INTERNAL_ERROR => {
             const_cstr!("internal error").as_ptr()
         }
-        gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_OK => {
-            const_cstr!("ok").as_ptr()
-        }
+        gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_OK => const_cstr!("ok").as_ptr(),
         gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_NO_SECRET => {
             const_cstr!("no secret given").as_ptr()
         }
@@ -488,9 +482,7 @@ pub extern "C" fn gvm_jwt_claims_get_exp(claims: gvm_jwt_claims_t) -> u64 {
     if claims.is_null() {
         return 0;
     }
-    unsafe {
-        (*claims).c.get_exp()
-    }
+    unsafe { (*claims).c.get_exp() }
 }
 
 /// Get the "issued at" time from JWT claims
@@ -499,9 +491,7 @@ pub unsafe extern "C" fn gvm_jwt_claims_get_iat(claims: gvm_jwt_claims_t) -> u64
     if claims.is_null() {
         return 0;
     }
-    unsafe {
-        (*claims).c.get_iat()
-    }
+    unsafe { (*claims).c.get_iat() }
 }
 
 /// Get the expiration time from JWT claims
@@ -510,9 +500,7 @@ pub extern "C" fn gvm_jwt_claims_get_sub(claims: gvm_jwt_claims_t) -> *const c_c
     if claims.is_null() {
         return null_mut();
     }
-    unsafe {
-        (*claims).sub
-    }
+    unsafe { (*claims).sub }
 }
 
 /// Enum specifying an error from `gvm_jwt_validate_token
@@ -541,16 +529,14 @@ pub extern "C" fn gvm_jwt_validate_token_strerror(
 ) -> *const c_char {
     let err_int = err as i32;
     if err_int < -1 || err_int > 5 {
-       return const_cstr!("unknown error").as_ptr()
+        return const_cstr!("unknown error").as_ptr();
     }
 
     match err {
         gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_INTERNAL_ERROR => {
             const_cstr!("internal error").as_ptr()
         }
-        gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_OK => {
-            const_cstr!("ok").as_ptr()
-        }
+        gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_OK => const_cstr!("ok").as_ptr(),
         gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_NO_SECRET => {
             const_cstr!("no secret given").as_ptr()
         }
