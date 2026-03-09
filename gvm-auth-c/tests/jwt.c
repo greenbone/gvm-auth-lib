@@ -148,7 +148,7 @@ Ensure (jwt, can_get_token_claims)
   time_t now = time (NULL);
   uint64_t iat = gvm_jwt_claims_get_iat (claims);
   uint64_t exp = gvm_jwt_claims_get_exp (claims);
-  char *sub = gvm_jwt_claims_get_sub (claims);
+  const char *sub = gvm_jwt_claims_get_sub (claims);
 
   assert_that (iat, is_greater_than (now - 10));
   assert_that (exp, is_greater_than (now - 10));
@@ -156,7 +156,6 @@ Ensure (jwt, can_get_token_claims)
   assert_that (sub, is_equal_to_string ("testuser"));
 
   gvm_jwt_claims_free (claims);
-  gvm_auth_str_free (sub);
   gvm_jwt_encode_secret_free (enc_secret);
   gvm_jwt_decode_secret_free (dec_secret);
   gvm_auth_str_free (token);
