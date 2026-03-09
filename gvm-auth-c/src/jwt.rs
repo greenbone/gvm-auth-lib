@@ -66,7 +66,7 @@ pub enum gvm_jwt_new_secret_err_t {
 #[unsafe(no_mangle)]
 pub extern "C" fn gvm_jwt_new_secret_strerror(err: gvm_jwt_new_secret_err_t) -> *const c_char {
     let err_int = err as i32;
-    if err_int < -1 || err_int > 4 {
+    if !(-1..=4).contains(&err_int) {
         return const_cstr!("unknown error").as_ptr();
     }
 
@@ -377,7 +377,7 @@ pub extern "C" fn gvm_jwt_generate_token_strerror(
     err: gvm_jwt_generate_token_err_t,
 ) -> *const c_char {
     let err_int = err as i32;
-    if err_int < -1 || err_int > 3 {
+    if !(-1..=3).contains(&err_int) {
         return const_cstr!("unknown error").as_ptr();
     }
 
@@ -467,7 +467,7 @@ pub type gvm_jwt_claims_t = *mut gvm_jwt_claims;
 /// # Safety
 /// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_claims_free(claims: gvm_jwt_claims_t) {
+pub unsafe extern "C" fn gvm_jwt_claims_free(claims: gvm_jwt_claims_t) {
     if !(claims.is_null()) {
         let boxed_claims = unsafe { Box::from_raw(claims) };
         drop(boxed_claims);
@@ -475,8 +475,11 @@ pub extern "C" fn gvm_jwt_claims_free(claims: gvm_jwt_claims_t) {
 }
 
 /// Get the expiration time from JWT claims
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_claims_get_exp(claims: gvm_jwt_claims_t) -> u64 {
+pub unsafe extern "C" fn gvm_jwt_claims_get_exp(claims: gvm_jwt_claims_t) -> u64 {
     if claims.is_null() {
         return 0;
     }
@@ -484,6 +487,9 @@ pub extern "C" fn gvm_jwt_claims_get_exp(claims: gvm_jwt_claims_t) -> u64 {
 }
 
 /// Get the "issued at" time from JWT claims
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn gvm_jwt_claims_get_iat(claims: gvm_jwt_claims_t) -> u64 {
     if claims.is_null() {
@@ -493,8 +499,11 @@ pub unsafe extern "C" fn gvm_jwt_claims_get_iat(claims: gvm_jwt_claims_t) -> u64
 }
 
 /// Get the expiration time from JWT claims
+///
+/// # Safety
+/// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_claims_get_sub(claims: gvm_jwt_claims_t) -> *const c_char {
+pub unsafe extern "C" fn gvm_jwt_claims_get_sub(claims: gvm_jwt_claims_t) -> *const c_char {
     if claims.is_null() {
         return null_mut();
     }
@@ -526,7 +535,7 @@ pub extern "C" fn gvm_jwt_validate_token_strerror(
     err: gvm_jwt_validate_token_err_t,
 ) -> *const c_char {
     let err_int = err as i32;
-    if err_int < -1 || err_int > 5 {
+    if !(-1..=5).contains(&err_int) {
         return const_cstr!("unknown error").as_ptr();
     }
 

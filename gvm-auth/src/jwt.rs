@@ -30,17 +30,17 @@ impl Claims {
     }
 
     /// Get the subject (username)
-    pub fn get_sub(self: &Self) -> &str {
+    pub fn get_sub(&self) -> &str {
         &self.sub
     }
 
     /// Get the expiration time as Unix timestamp
-    pub fn get_exp(self: &Self) -> u64 {
+    pub fn get_exp(&self) -> u64 {
         self.exp
     }
 
     /// Get the time the token was issued at as Unix timestamp
-    pub fn get_iat(self: &Self) -> u64 {
+    pub fn get_iat(&self) -> u64 {
         self.iat
     }
 }
