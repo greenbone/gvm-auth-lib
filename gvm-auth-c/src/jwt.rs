@@ -395,7 +395,10 @@ pub unsafe extern "C" fn gvm_jwt_generate_token(
 /// Opaque C wrapper for the Claims type
 #[allow(non_camel_case_types)]
 pub struct gvm_jwt_claims {
-    c: Claims
+    /// Original Rust claims structure
+    c: Claims,
+    /// Subject converted to a C string
+    sub: *mut c_char,
 }
 
 /// Opaque pointer to a JWT Claims data structure
@@ -409,6 +412,8 @@ pub type gvm_jwt_claims_t = *mut gvm_jwt_claims;
 #[unsafe(no_mangle)]
 pub extern "C" fn gvm_jwt_claims_free(claims: gvm_jwt_claims_t) {
     if !(claims.is_null()) {
+        // let sub = unsafe { CString::from_raw((*claims).sub) };
+        // drop (sub);
         let boxed_claims = unsafe { Box::from_raw(claims) };
         drop(boxed_claims);
     }
@@ -438,15 +443,12 @@ pub unsafe extern "C" fn gvm_jwt_claims_get_iat(claims: gvm_jwt_claims_t) -> u64
 
 /// Get the expiration time from JWT claims
 #[unsafe(no_mangle)]
-pub extern "C" fn gvm_jwt_claims_get_sub(claims: gvm_jwt_claims_t) -> *mut c_char {
+pub extern "C" fn gvm_jwt_claims_get_sub(claims: gvm_jwt_claims_t) -> *const c_char {
     if claims.is_null() {
         return null_mut();
     }
     unsafe {
-        match CString::new((*claims).c.get_sub()) {
-            Ok(v) => v.into_raw(),
-            Err(_e) => null_mut()
-        }
+        (*claims).sub
     }
 }
 
@@ -505,7 +507,17 @@ pub unsafe extern "C" fn gvm_jwt_validate_token(
 
     if !(claims_out.is_null()) {
         unsafe {
-            let boxed_claims = Box::<gvm_jwt_claims>::new(gvm_jwt_claims { c: inner_claims });
+            let sub = match CString::new(inner_claims.get_sub()) {
+                Ok(v) => v,
+                Err(_e) => {
+                    return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_MALFORMED_CLAIMS;
+                }
+            };
+            let c_claims = gvm_jwt_claims {
+                c: inner_claims,
+                sub: sub.into_raw(),
+            };
+            let boxed_claims = Box::<gvm_jwt_claims>::new(c_claims);
             *claims_out = Box::<gvm_jwt_claims>::into_raw(boxed_claims);
         }
     }
