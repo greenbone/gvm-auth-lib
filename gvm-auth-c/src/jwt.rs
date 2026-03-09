@@ -469,8 +469,6 @@ pub type gvm_jwt_claims_t = *mut gvm_jwt_claims;
 #[unsafe(no_mangle)]
 pub extern "C" fn gvm_jwt_claims_free(claims: gvm_jwt_claims_t) {
     if !(claims.is_null()) {
-        // let sub = unsafe { CString::from_raw((*claims).sub) };
-        // drop (sub);
         let boxed_claims = unsafe { Box::from_raw(claims) };
         drop(boxed_claims);
     }
