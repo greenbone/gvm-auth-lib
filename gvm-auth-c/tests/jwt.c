@@ -146,16 +146,17 @@ Ensure (jwt, can_get_token_claims)
   assert_that (validate_token_err, is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_OK));
 
   time_t now = time (NULL);
-  assert_that (claims.iat, is_greater_than (now - 10));
-  assert_that (claims.exp, is_greater_than (now - 10));
-  assert_that (claims.exp - claims.iat, is_equal_to (100));
-  assert_that (claims.sub, is_equal_to_string ("testuser"));
+  uint64_t iat = gvm_jwt_claims_get_iat (claims);
+  uint64_t exp = gvm_jwt_claims_get_exp (claims);
+  char *sub = gvm_jwt_claims_get_sub (claims);
 
-  gvm_jwt_claims_reset (&claims);
-  assert_that (claims.exp, is_equal_to (0));
-  assert_that (claims.exp, is_equal_to (0));
-  assert_that (claims.sub, is_null);
+  assert_that (iat, is_greater_than (now - 10));
+  assert_that (exp, is_greater_than (now - 10));
+  assert_that (exp - iat, is_equal_to (100));
+  assert_that (sub, is_equal_to_string ("testuser"));
 
+  gvm_jwt_claims_free (claims);
+  gvm_auth_str_free (sub);
   gvm_jwt_encode_secret_free (enc_secret);
   gvm_jwt_decode_secret_free (dec_secret);
   gvm_auth_str_free (token);
@@ -188,6 +189,37 @@ Ensure (jwt, rejects_expired_token)
   gvm_auth_str_free (token);
 }
 
+Ensure (jwt, rejects_null_secret_or_token)
+{
+  gvm_jwt_encode_secret_t enc_secret;
+  gvm_jwt_decode_secret_t dec_secret;
+  char *token;
+  gvm_jwt_generate_token_err_t generate_token_err;
+  gvm_jwt_validate_token_err_t validate_token_err;
+
+  enc_secret = gvm_jwt_new_shared_encode_secret ("ABCDEF", NULL);
+  dec_secret = gvm_jwt_new_shared_decode_secret ("ABCDEF", NULL);
+
+  generate_token_err = GVM_JWT_GENERATE_TOKEN_ERR_INTERNAL_ERROR;
+  token =
+    gvm_jwt_generate_token (enc_secret, "testuser", -100, &generate_token_err);
+  assert_that (generate_token_err, is_equal_to (GVM_JWT_GENERATE_TOKEN_ERR_OK));
+  assert_that (token, is_not_null);
+  assert_that (token, is_not_equal_to_string (""));
+
+  validate_token_err = gvm_jwt_validate_token (NULL, token, NULL);
+  assert_that (validate_token_err,
+               is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_NO_SECRET));
+
+  validate_token_err = gvm_jwt_validate_token (dec_secret, NULL, NULL);
+  assert_that (validate_token_err,
+               is_equal_to (GVM_JWT_VALIDATE_TOKEN_ERR_NO_TOKEN));
+
+  gvm_jwt_encode_secret_free (enc_secret);
+  gvm_jwt_decode_secret_free (dec_secret);
+  gvm_auth_str_free (token);
+}
+
 /* Test suite. */
 
 int
@@ -205,6 +237,7 @@ main (int argc, char **argv)
   add_test_with_context (suite, jwt, can_generate_valid_token_from_rsa_pem);
   add_test_with_context (suite, jwt, can_get_token_claims);
   add_test_with_context (suite, jwt, rejects_expired_token);
+  add_test_with_context (suite, jwt, rejects_null_secret_or_token);
 
   if (argc > 1)
     ret = run_single_test (suite, argv[1], reporter);

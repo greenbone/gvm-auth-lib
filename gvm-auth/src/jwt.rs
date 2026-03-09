@@ -8,13 +8,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: String, // Subject (user name)
-    pub exp: u64,    // Expiration Time as Unix timestamp
-    pub iat: u64,    // Issued at as Unix timestamp
+    /// Subject (user name)
+    sub: String,
+    /// Expiration Time as Unix timestamp
+    exp: u64,
+    /// Issued at as Unix timestamp
+    iat: u64,
 }
 
 #[allow(unused)]
 impl Claims {
+    /// Create a new Claims structure from subject and time until expiration
     pub fn new(sub: String, expiration: Duration) -> Self {
         let now = Utc::now();
         let exp = (now + expiration).timestamp() as u64;
@@ -24,15 +28,30 @@ impl Claims {
             iat: now.timestamp() as u64,
         }
     }
+
+    /// Get the subject (username)
+    pub fn get_sub(self: &Self) -> &str {
+        &self.sub
+    }
+
+    /// Get the expiration time as Unix timestamp
+    pub fn get_exp(self: &Self) -> u64 {
+        self.exp
+    }
+
+    /// Get the time the token was issued at as Unix timestamp
+    pub fn get_iat(self: &Self) -> u64 {
+        self.iat
+    }
 }
 
 #[derive(Clone, Debug)]
 pub enum JwtEncodeSecret {
     /// A shared secret for HMAC algorithms.
     SharedSecret(EncodingKey, Algorithm),
-    // An RSA private key in PEM format.
+    /// An RSA private key in PEM format.
     RsaKey(EncodingKey, Algorithm),
-    // An ECDSA private key in PEM format.
+    /// An ECDSA private key in PEM format.
     EcdsaKey(EncodingKey, Algorithm),
 }
 
@@ -121,6 +140,14 @@ pub fn generate_token(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_claims_getters() {
+        let claims = Claims::new("test_user".to_string(), Duration::minutes(10));
+
+        assert_eq!(claims.get_sub(), "test_user");
+        assert_eq!(claims.get_exp() - claims.get_iat(), 600);
+    }
 
     #[test]
     fn test_shared_secret() {

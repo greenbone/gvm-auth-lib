@@ -392,30 +392,60 @@ pub unsafe extern "C" fn gvm_jwt_generate_token(
     rs_string_to_c_ptr(token)
 }
 
-/// Struct defining JWT claims
-#[repr(C)]
+/// Opaque C wrapper for the Claims type
 #[allow(non_camel_case_types)]
-pub struct gvm_jwt_claims_t {
-    /// Subject (user name)
-    pub sub: *mut c_char,
-    /// Expiration Time as Unix timestamp
-    pub exp: u64,
-    /// Issued at as Unix timestamp
-    pub iat: u64,
+pub struct gvm_jwt_claims {
+    c: Claims
 }
 
-/// Reset a claims struct, freeing any string fields
+/// Opaque pointer to a JWT Claims data structure
+#[allow(non_camel_case_types)]
+pub type gvm_jwt_claims_t = *mut gvm_jwt_claims;
+
+/// Free a JWT claims data structure
 ///
 /// # Safety
 /// Pointers must be valid or null.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn gvm_jwt_claims_reset(claims: *mut gvm_jwt_claims_t) {
-    if !claims.is_null() {
-        unsafe {
-            let _ = CString::from_raw((*claims).sub);
-            (*claims).iat = 0;
-            (*claims).exp = 0;
-            (*claims).sub = null_mut();
+pub extern "C" fn gvm_jwt_claims_free(claims: gvm_jwt_claims_t) {
+    if !(claims.is_null()) {
+        let boxed_claims = unsafe { Box::from_raw(claims) };
+        drop(boxed_claims);
+    }
+}
+
+/// Get the expiration time from JWT claims
+#[unsafe(no_mangle)]
+pub extern "C" fn gvm_jwt_claims_get_exp(claims: gvm_jwt_claims_t) -> u64 {
+    if claims.is_null() {
+        return 0;
+    }
+    unsafe {
+        (*claims).c.get_exp()
+    }
+}
+
+/// Get the "issued at" time from JWT claims
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn gvm_jwt_claims_get_iat(claims: gvm_jwt_claims_t) -> u64 {
+    if claims.is_null() {
+        return 0;
+    }
+    unsafe {
+        (*claims).c.get_iat()
+    }
+}
+
+/// Get the expiration time from JWT claims
+#[unsafe(no_mangle)]
+pub extern "C" fn gvm_jwt_claims_get_sub(claims: gvm_jwt_claims_t) -> *mut c_char {
+    if claims.is_null() {
+        return null_mut();
+    }
+    unsafe {
+        match CString::new((*claims).c.get_sub()) {
+            Ok(v) => v.into_raw(),
+            Err(_e) => null_mut()
         }
     }
 }
@@ -454,6 +484,11 @@ pub unsafe extern "C" fn gvm_jwt_validate_token(
     if secret.is_null() {
         return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_NO_SECRET;
     }
+
+    if token.is_null() {
+        return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_NO_TOKEN;
+    }
+
     let rs_secret: &JwtDecodeSecret = unsafe { &(*secret).s };
     let token_cstr = unsafe { CStr::from_ptr(token) };
     let token_str = match token_cstr.to_str() {
@@ -461,7 +496,7 @@ pub unsafe extern "C" fn gvm_jwt_validate_token(
         Err(_e) => return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_NO_TOKEN,
     };
 
-    let claims: Claims = match validate_token(rs_secret, &token_str) {
+    let inner_claims: Claims = match validate_token(rs_secret, &token_str) {
         Ok(v) => v,
         Err(_e) => {
             return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_VALIDATION_FAILED;
@@ -470,15 +505,8 @@ pub unsafe extern "C" fn gvm_jwt_validate_token(
 
     if !(claims_out.is_null()) {
         unsafe {
-            let sub = match CString::new(claims.sub) {
-                Ok(s) => s.into_raw(),
-                Err(_e) => {
-                    return gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_MALFORMED_CLAIMS;
-                }
-            };
-            (*claims_out).iat = claims.iat;
-            (*claims_out).exp = claims.exp;
-            (*claims_out).sub = sub;
+            let boxed_claims = Box::<gvm_jwt_claims>::new(gvm_jwt_claims { c: inner_claims });
+            *claims_out = Box::<gvm_jwt_claims>::into_raw(boxed_claims);
         }
     }
 
