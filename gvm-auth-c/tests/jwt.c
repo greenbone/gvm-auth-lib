@@ -22,6 +22,103 @@ AfterEach (jwt)
 {
 }
 
+Ensure (jwt, can_get_new_secret_error_strings)
+{
+  assert_that (gvm_jwt_new_secret_strerror (
+                  GVM_JWT_NEW_SECRET_ERR_INTERNAL_ERROR),
+               is_equal_to_string ("internal error"));
+
+  assert_that (gvm_jwt_new_secret_strerror (GVM_JWT_NEW_SECRET_ERR_OK),
+               is_equal_to_string ("ok"));
+
+  assert_that (gvm_jwt_new_secret_strerror (GVM_JWT_NEW_SECRET_ERR_NO_DATA),
+               is_equal_to_string ("no secret data given"));
+
+  assert_that (gvm_jwt_new_secret_strerror (
+                  GVM_JWT_NEW_SECRET_ERR_STRING_CONVERSION_FAILED),
+               is_equal_to_string ("data could not be converted to a string"));
+
+  assert_that (gvm_jwt_new_secret_strerror (
+                  GVM_JWT_NEW_SECRET_ERR_INVALID_EC_PEM),
+               is_equal_to_string ("data is not valid ECDSA PEM"));
+
+  assert_that (gvm_jwt_new_secret_strerror (
+                  GVM_JWT_NEW_SECRET_ERR_INVALID_RSA_PEM),
+               is_equal_to_string ("data is not valid RSA PEM key"));
+
+
+  assert_that (gvm_jwt_new_secret_strerror (-2),
+               is_equal_to_string ("unknown error"));
+
+  assert_that (gvm_jwt_new_secret_strerror (5),
+               is_equal_to_string ("unknown error"));
+
+  assert_that (gvm_jwt_new_secret_strerror (123),
+               is_equal_to_string ("unknown error"));
+}
+
+Ensure (jwt, can_get_generate_error_strings)
+{
+  assert_that (gvm_jwt_generate_token_strerror (
+                  GVM_JWT_GENERATE_TOKEN_ERR_INTERNAL_ERROR),
+               is_equal_to_string ("internal error"));
+
+  assert_that (gvm_jwt_generate_token_strerror (GVM_JWT_GENERATE_TOKEN_ERR_OK),
+               is_equal_to_string ("ok"));
+
+  assert_that (gvm_jwt_generate_token_strerror (
+                  GVM_JWT_GENERATE_TOKEN_ERR_NO_SECRET),
+               is_equal_to_string ("no secret given"));
+
+  assert_that (gvm_jwt_generate_token_strerror (
+                  GVM_JWT_GENERATE_TOKEN_ERR_INVALID_USER_ID),
+               is_equal_to_string ("username could not be converted to a string"));
+
+  assert_that (gvm_jwt_generate_token_strerror (
+                  GVM_JWT_GENERATE_TOKEN_ERR_GENERATE_FAILED),
+               is_equal_to_string ("failed to generate token"));
+
+  assert_that (gvm_jwt_generate_token_strerror (-2),
+               is_equal_to_string ("unknown error"));
+
+  assert_that (gvm_jwt_generate_token_strerror (4),
+               is_equal_to_string ("unknown error"));
+
+  assert_that (gvm_jwt_generate_token_strerror (123),
+               is_equal_to_string ("unknown error"));
+}
+
+Ensure (jwt, can_get_validate_error_strings)
+{
+  assert_that (gvm_jwt_validate_token_strerror (
+                  GVM_JWT_VALIDATE_TOKEN_ERR_INTERNAL_ERROR),
+               is_equal_to_string ("internal error"));
+
+  assert_that (gvm_jwt_validate_token_strerror (GVM_JWT_VALIDATE_TOKEN_ERR_OK),
+               is_equal_to_string ("ok"));
+
+  assert_that (gvm_jwt_validate_token_strerror (
+                  GVM_JWT_VALIDATE_TOKEN_ERR_NO_SECRET),
+               is_equal_to_string ("no secret given"));
+
+  assert_that (gvm_jwt_validate_token_strerror (
+                  GVM_JWT_VALIDATE_TOKEN_ERR_VALIDATION_FAILED),
+               is_equal_to_string ("failed to validate token"));
+
+  assert_that (gvm_jwt_validate_token_strerror (
+                  GVM_JWT_VALIDATE_TOKEN_MALFORMED_CLAIMS),
+               is_equal_to_string ("token claims do not match expected structure"));
+
+  assert_that (gvm_jwt_validate_token_strerror (-2),
+               is_equal_to_string ("unknown error"));
+
+  assert_that (gvm_jwt_validate_token_strerror (6),
+               is_equal_to_string ("unknown error"));
+
+  assert_that (gvm_jwt_validate_token_strerror (123),
+               is_equal_to_string ("unknown error"));
+}
+
 Ensure (jwt, can_generate_valid_token)
 {
   gvm_jwt_encode_secret_t enc_secret;
@@ -231,6 +328,9 @@ main (int argc, char **argv)
   suite = create_test_suite ();
   reporter = create_text_reporter ();
 
+  add_test_with_context (suite, jwt, can_get_new_secret_error_strings);
+  add_test_with_context (suite, jwt, can_get_generate_error_strings);
+  add_test_with_context (suite, jwt, can_get_validate_error_strings);
   add_test_with_context (suite, jwt, can_generate_valid_token);
   add_test_with_context (suite, jwt, can_generate_valid_token_from_ecdsa_pem);
   add_test_with_context (suite, jwt, can_generate_valid_token_from_rsa_pem);

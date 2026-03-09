@@ -45,6 +45,7 @@ pub enum gvm_jwt_secret_type_t {
 /// Enum specifying an error from `gvm_jwt_new_decode_secret`
 ///  or `gvm_jwt_new_encode_secret`
 #[repr(C)]
+#[derive(Clone, Copy)]
 #[allow(non_camel_case_types)]
 pub enum gvm_jwt_new_secret_err_t {
     /// Unspecified internal error,
@@ -59,6 +60,38 @@ pub enum gvm_jwt_new_secret_err_t {
     GVM_JWT_NEW_SECRET_ERR_INVALID_EC_PEM = 3,
     /// Data is not a valid RSA PEM key
     GVM_JWT_NEW_SECRET_ERR_INVALID_RSA_PEM = 4,
+}
+
+/// Returns a string describing a given gvm_jwt_new_secret_err_t
+#[unsafe(no_mangle)]
+pub extern "C" fn gvm_jwt_new_secret_strerror(
+    err: gvm_jwt_new_secret_err_t,
+) -> *const c_char {
+    let err_int = err as i32;
+    if err_int < -1 || err_int > 4 {
+       return const_cstr!("unknown error").as_ptr()
+    }
+
+    match err {
+        gvm_jwt_new_secret_err_t::GVM_JWT_NEW_SECRET_ERR_INTERNAL_ERROR => {
+            const_cstr!("internal error").as_ptr()
+        }
+        gvm_jwt_new_secret_err_t::GVM_JWT_NEW_SECRET_ERR_OK => {
+            const_cstr!("ok").as_ptr()
+        }
+        gvm_jwt_new_secret_err_t::GVM_JWT_NEW_SECRET_ERR_NO_DATA => {
+            const_cstr!("no secret data given").as_ptr()
+        }
+        gvm_jwt_new_secret_err_t::GVM_JWT_NEW_SECRET_ERR_STRING_CONVERSION_FAILED => {
+            const_cstr!("data could not be converted to a string").as_ptr()
+        }
+        gvm_jwt_new_secret_err_t::GVM_JWT_NEW_SECRET_ERR_INVALID_EC_PEM => {
+            const_cstr!("data is not valid ECDSA PEM").as_ptr()
+        }
+        gvm_jwt_new_secret_err_t::GVM_JWT_NEW_SECRET_ERR_INVALID_RSA_PEM => {
+            const_cstr!("data is not valid RSA PEM key").as_ptr()
+        }
+    }
 }
 
 /// Create a new JWT decode secret
@@ -327,6 +360,7 @@ pub unsafe extern "C" fn gvm_jwt_encode_secret_free(secret: gvm_jwt_encode_secre
 
 /// Enum specifying an error from `gvm_jwt_generate_token`
 #[repr(C)]
+#[derive(Clone, Copy)]
 #[allow(non_camel_case_types)]
 pub enum gvm_jwt_generate_token_err_t {
     /// Unspecified internal error
@@ -339,6 +373,35 @@ pub enum gvm_jwt_generate_token_err_t {
     GVM_JWT_GENERATE_TOKEN_ERR_INVALID_USER_ID = 2,
     /// Failed to generate token
     GVM_JWT_GENERATE_TOKEN_ERR_GENERATE_FAILED = 3,
+}
+
+/// Returns a string describing a given gvm_jwt_generate_token_err_t
+#[unsafe(no_mangle)]
+pub extern "C" fn gvm_jwt_generate_token_strerror(
+    err: gvm_jwt_generate_token_err_t,
+) -> *const c_char {
+    let err_int = err as i32;
+    if err_int < -1 || err_int > 3 {
+       return const_cstr!("unknown error").as_ptr()
+    }
+
+    match err {
+        gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_INTERNAL_ERROR => {
+            const_cstr!("internal error").as_ptr()
+        }
+        gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_OK => {
+            const_cstr!("ok").as_ptr()
+        }
+        gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_NO_SECRET => {
+            const_cstr!("no secret given").as_ptr()
+        }
+        gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_INVALID_USER_ID => {
+            const_cstr!("username could not be converted to a string").as_ptr()
+        }
+        gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_GENERATE_FAILED => {
+            const_cstr!("failed to generate token").as_ptr()
+        }
+    }
 }
 
 /// Create a JWT for a given secret, user_id and validity
@@ -454,6 +517,7 @@ pub extern "C" fn gvm_jwt_claims_get_sub(claims: gvm_jwt_claims_t) -> *const c_c
 
 /// Enum specifying an error from `gvm_jwt_validate_token
 #[repr(C)]
+#[derive(Clone, Copy)]
 #[allow(non_camel_case_types)]
 pub enum gvm_jwt_validate_token_err_t {
     /// Unspecified internal error
@@ -468,6 +532,38 @@ pub enum gvm_jwt_validate_token_err_t {
     GVM_JWT_VALIDATE_TOKEN_ERR_VALIDATION_FAILED = 3,
     /// Token claims do not match expected structure
     GVM_JWT_VALIDATE_TOKEN_MALFORMED_CLAIMS = 4,
+}
+
+/// Returns a string describing a given gvm_jwt_validate_token_err_t
+#[unsafe(no_mangle)]
+pub extern "C" fn gvm_jwt_validate_token_strerror(
+    err: gvm_jwt_validate_token_err_t,
+) -> *const c_char {
+    let err_int = err as i32;
+    if err_int < -1 || err_int > 5 {
+       return const_cstr!("unknown error").as_ptr()
+    }
+
+    match err {
+        gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_INTERNAL_ERROR => {
+            const_cstr!("internal error").as_ptr()
+        }
+        gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_OK => {
+            const_cstr!("ok").as_ptr()
+        }
+        gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_NO_SECRET => {
+            const_cstr!("no secret given").as_ptr()
+        }
+        gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_NO_TOKEN => {
+            const_cstr!("no token given").as_ptr()
+        }
+        gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_ERR_VALIDATION_FAILED => {
+            const_cstr!("failed to validate token").as_ptr()
+        }
+        gvm_jwt_validate_token_err_t::GVM_JWT_VALIDATE_TOKEN_MALFORMED_CLAIMS => {
+            const_cstr!("token claims do not match expected structure").as_ptr()
+        }
+    }
 }
 
 /// Validate a JWT with a given secret.

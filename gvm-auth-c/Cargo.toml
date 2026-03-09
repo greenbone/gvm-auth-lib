@@ -25,6 +25,7 @@ chrono = { workspace = true }
 jsonwebtoken = { workspace = true }
 serde = { workspace = true }
 tiny_http = { workspace = true }
+const-cstr = "0.3.0"
 
 [build-dependencies]
 build-print = "1.0.1"
