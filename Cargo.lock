@@ -323,6 +323,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "const-cstr"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed3d0b5ff30645a68f35ece8cea4556ca14ef8a1651455f789a099a0513532a6"
+
+[[package]]
 name = "core-foundation-sys"
 version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -586,6 +592,7 @@ dependencies = [
  "cbindgen",
  "cc",
  "chrono",
+ "const-cstr",
  "gvm-auth",
  "httpmock",
  "jsonwebtoken",
