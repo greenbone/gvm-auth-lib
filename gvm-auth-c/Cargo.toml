@@ -29,7 +29,7 @@ const-cstr = "0.3.0"
 
 [build-dependencies]
 build-print = "1.0.1"
-cbindgen = "0.29.2"
+cbindgen = "0.29.3"
 cc = "1.2.61"
 
 [dev-dependencies]
