@@ -23,7 +23,7 @@ jobs:
           && sudo apt-get install -y --no-install-recommends  --no-install-suggests \
             libcgreen1-dev
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Rust
         uses: greenbone/actions/setup-rust@v3
       - name: Build Rust library
@@ -45,7 +45,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Rust
         uses: greenbone/actions/setup-rust@v3
       - name: Run Rust linter
@@ -56,7 +56,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Rust
         uses: greenbone/actions/setup-rust@v3
       - name: Check Rust Format
@@ -76,7 +76,7 @@ jobs:
     name: Check CMake Formatting
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: greenbone/actions/uv@v3
         with:
           install: gersemi
