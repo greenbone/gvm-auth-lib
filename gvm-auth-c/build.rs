@@ -8,6 +8,8 @@ use std::env;
 use std::path::Path;
 
 fn main() {
+    configure_shared_library_soname();
+
     let profile = env::var("PROFILE").unwrap();
     let cargo_manifest_dir_env = env::var("CARGO_MANIFEST_DIR").unwrap();
     let has_headers_feature = env::var("CARGO_FEATURE_HEADERS").is_ok();
@@ -47,4 +49,17 @@ fn main() {
             println!("cargo:rerun-if-changed=c_header_top.txt");
         }
     }
+}
+
+fn configure_shared_library_soname() {
+    let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
+
+    if target_os != "linux" {
+        return;
+    }
+
+    let major_version =
+        std::env::var("CARGO_PKG_VERSION_MAJOR").expect("CARGO_PKG_VERSION_MAJOR is missing");
+
+    println!("cargo:rustc-cdylib-link-arg=-Wl,-soname,libgvm_auth.so.{major_version}");
 }
