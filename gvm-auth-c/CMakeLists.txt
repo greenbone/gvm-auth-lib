@@ -72,6 +72,17 @@ set(
   C_LIB_FILENAME
   ${CMAKE_SHARED_LIBRARY_PREFIX}gvm_auth${CMAKE_SHARED_LIBRARY_SUFFIX}
 )
+
+set(C_LIB_SOVERSION "${PROJECT_VERSION_MAJOR}")
+
+set(C_LIB_SONAME_FILENAME "${C_LIB_FILENAME}.${C_LIB_SOVERSION}")
+
+set(C_LIB_VERSIONED_FILENAME "${C_LIB_FILENAME}.${PROJECT_VERSION}")
+
+set(C_LIB_STAGE_DIR "${CMAKE_CURRENT_BINARY_DIR}/versioned-lib")
+
+set(C_LIB_VERSIONED_BUILD_PATH "${C_LIB_STAGE_DIR}/${C_LIB_VERSIONED_FILENAME}")
+
 set(C_LIB_BUILD_PATH ${RUST_BUILD_PATH}/${C_LIB_FILENAME})
 set(C_LIB_HEADER_PATH ${RUST_BUILD_PATH}/gvm_auth.h)
 
@@ -111,7 +122,17 @@ add_custom_command(
   USES_TERMINAL
 )
 
-add_custom_target(c-lib ALL DEPENDS ${C_LIB_BUILD_PATH})
+add_custom_command(
+  OUTPUT ${C_LIB_VERSIONED_BUILD_PATH}
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${C_LIB_STAGE_DIR}
+  COMMAND
+    ${CMAKE_COMMAND} -E copy_if_different ${C_LIB_BUILD_PATH}
+    ${C_LIB_VERSIONED_BUILD_PATH}
+  DEPENDS ${C_LIB_BUILD_PATH}
+  VERBATIM
+)
+
+add_custom_target(c-lib ALL DEPENDS ${C_LIB_VERSIONED_BUILD_PATH})
 
 # Installation
 
@@ -130,7 +151,40 @@ if(NOT INCLUDEDIR)
   set(INCLUDEDIR "include")
 endif(NOT INCLUDEDIR)
 
-install(FILES ${C_LIB_BUILD_PATH} DESTINATION ${LIBDIR})
+install(FILES ${C_LIB_VERSIONED_BUILD_PATH} DESTINATION ${LIBDIR})
+
+install(
+  CODE
+    "
+    set(
+      install_libdir
+      \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/${LIBDIR}\"
+    )
+
+    file(MAKE_DIRECTORY \"\${install_libdir}\")
+
+    file(REMOVE
+      \"\${install_libdir}/${C_LIB_SONAME_FILENAME}\"
+      \"\${install_libdir}/${C_LIB_FILENAME}\"
+    )
+
+    execute_process(
+      COMMAND
+        \"${CMAKE_COMMAND}\" -E create_symlink
+        \"${C_LIB_VERSIONED_FILENAME}\"
+        \"\${install_libdir}/${C_LIB_SONAME_FILENAME}\"
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+
+    execute_process(
+      COMMAND
+        \"${CMAKE_COMMAND}\" -E create_symlink
+        \"${C_LIB_SONAME_FILENAME}\"
+        \"\${install_libdir}/${C_LIB_FILENAME}\"
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  "
+)
 
 install(FILES ${C_LIB_HEADER_PATH} DESTINATION "${INCLUDEDIR}/gvm/auth")
 
