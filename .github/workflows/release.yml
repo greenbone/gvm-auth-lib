@@ -85,45 +85,136 @@ jobs:
           next-version: "false"
 
   build-binaries:
-    name: Build binary artifacts
-    runs-on: "ubuntu-latest"
-    container: rust:slim-bookworm
+    name: Build binary artifacts (${{ matrix.arch }})
     needs: build-and-release
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            tarball-suffix: ""
+            expected-machine: "x86-64|x86_64"
+          - arch: arm64
+            runner: self-hosted-generic-arm64
+            tarball-suffix: "-arm64"
+            expected-machine: "aarch64|ARM aarch64"
+
+    runs-on: ${{ matrix.runner }}
+    container: rust:slim-bookworm
+
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.build-and-release.outputs.git-release-tag }}
+
       - name: Build project
         run: |
-          apt-get update && apt-get install -y cmake make gcc libc6-dev wget
+          apt-get update && apt-get install -y cmake make gcc libc6-dev wget file binutils
           cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_TESTING=OFF -S . -B build
-          cmake --build build
+          cmake --build build --parallel
           DESTDIR=/tmp/install cmake --install build
-      - name: Create tarballs
+      
+      - name: Verify library
+        shell: bash
         run: |
-          tar -C /tmp/install -czvf gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}.tar.gz .
+          set -euo pipefail
+  
+          library="$(
+            find /tmp/install \
+              -type f \
+              -name 'libgvm_auth.so.*.*.*' \
+              -print \
+              -quit
+          )"
+  
+          if [ -z "${library}" ]; then
+            echo "Could not find the versioned gvm-auth library."
+            exit 1
+          fi
+  
+          echo "Runner architecture:"
+          uname -m
+  
+          echo "Library information:"
+          file "${library}"
+  
+          file "${library}" | grep -E '${{ matrix.expected-machine }}'
+          readelf -d "${library}" |
+            grep -F 'Library soname: [libgvm_auth.so.0]'
+  
+          test -L "$(dirname "${library}")/libgvm_auth.so"
+          test -L "$(dirname "${library}")/libgvm_auth.so.0"
+  
+          ls -l "$(dirname "${library}")"/libgvm_auth.so*
+
+      - name: Create tarball
+        shell: bash
+        run: |
+          set -euo pipefail
+  
+          tarball="gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}${{ matrix.tarball-suffix }}.tar.gz"
+  
+          tar \
+            -C /tmp/install \
+            -czf "${tarball}" \
+            .
+  
+          tar -tzf "${tarball}" | grep 'libgvm_auth'
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a #v7.0.1
         with:
-          name: gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}-tarball
-          path: gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}.tar.gz
+          name: gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}-${{ matrix.arch }}-tarball
+          path: gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}${{ matrix.tarball-suffix }}.tar.gz
 
   upload-and-sign-release-files:
     name: Upload and sign release files
-    runs-on: "ubuntu-latest"
+    runs-on: ubuntu-latest
     needs:
       - build-and-release
       - build-binaries
+  
     steps:
-      - name: Download release artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c #v8.0.1
+      - name: Download amd64 artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}-tarball
-      - name: Upload release artifacts to GitHub Release
+          name: gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}-amd64-tarball
+          path: release-assets
+  
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}-arm64-tarball
+          path: release-assets
+  
+      - name: Verify release assets
+        shell: bash
         run: |
-          gh release upload --repo ${{ github.repository }} ${{ needs.build-and-release.outputs.git-release-tag }} gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}.tar.gz
+          set -euo pipefail
+  
+          amd64_asset="release-assets/gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}.tar.gz"
+          arm64_asset="release-assets/gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}-arm64.tar.gz"
+  
+          test -f "${amd64_asset}"
+          test -f "${arm64_asset}"
+  
+          ls -lh release-assets
+  
+      - name: Upload release artifacts to GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+  
+          gh release upload \
+            --repo "${{ github.repository }}" \
+            "${{ needs.build-and-release.outputs.git-release-tag }}" \
+            "release-assets/gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}.tar.gz" \
+            "release-assets/gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}-arm64.tar.gz"
         env:
           GH_TOKEN: ${{ secrets.GREENBONE_BOT_TOKEN }}
+  
       - name: Sign release files
         uses: greenbone/actions/sign-release-files@v3
         with:
