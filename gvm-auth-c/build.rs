@@ -62,4 +62,6 @@ fn configure_shared_library_soname() {
         std::env::var("CARGO_PKG_VERSION_MAJOR").expect("CARGO_PKG_VERSION_MAJOR is missing");
 
     println!("cargo:rustc-cdylib-link-arg=-Wl,-soname,libgvm_auth.so.{major_version}");
+    // Do not allow unresolved symbols in the shared library.
+    println!("cargo:rustc-cdylib-link-arg=-Wl,-z,defs");
 }
