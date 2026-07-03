@@ -94,7 +94,7 @@ jobs:
         include:
           - arch: amd64
             runner: ubuntu-latest
-            tarball-suffix: ""
+            tarball-suffix: "-amd64"
             expected-machine: "x86-64|x86_64"
           - arch: arm64
             runner: self-hosted-generic-arm64
@@ -194,7 +194,7 @@ jobs:
         run: |
           set -euo pipefail
   
-          amd64_asset="release-assets/gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}.tar.gz"
+          amd64_asset="release-assets/gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}-amd64.tar.gz"
           arm64_asset="release-assets/gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}-arm64.tar.gz"
   
           test -f "${amd64_asset}"
@@ -210,7 +210,7 @@ jobs:
           gh release upload \
             --repo "${{ github.repository }}" \
             "${{ needs.build-and-release.outputs.git-release-tag }}" \
-            "release-assets/gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}.tar.gz" \
+            "release-assets/gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}-amd64.tar.gz" \
             "release-assets/gvm-auth-c-${{ needs.build-and-release.outputs.release-version }}-arm64.tar.gz"
         env:
           GH_TOKEN: ${{ secrets.GREENBONE_BOT_TOKEN }}
