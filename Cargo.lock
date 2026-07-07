@@ -222,9 +222,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.65"
+version = "1.2.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e228eec9be7c17ccb640b59b36a5cd805ea2a564a4c5e162c2f659fea30d3b96"
+checksum = "f5d6cac793997bd970000024b2934968efe83b382de4fdcf4fcb46b6ee4ad996"
 dependencies = [
  "find-msvc-tools",
  "jobserver",
@@ -596,7 +596,7 @@ dependencies = [
 
 [[package]]
 name = "gvm-auth"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "chrono",
  "httpmock",
@@ -610,7 +610,7 @@ dependencies = [
 
 [[package]]
 name = "gvm-auth-c"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "build-print",
  "cbindgen",
@@ -626,7 +626,7 @@ dependencies = [
 
 [[package]]
 name = "gvm-auth-cli"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "chrono",
  "clap",
