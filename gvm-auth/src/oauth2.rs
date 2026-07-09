@@ -4,7 +4,7 @@
 
 use crate::clock::{Clock, SystemClock};
 use oauth2::basic::BasicClient;
-use oauth2::reqwest;
+use oauth2::{reqwest, AuthType};
 use oauth2::{
     AuthUrl, ClientId, ClientSecret, EndpointNotSet, EndpointSet, Scope, TokenResponse, TokenUrl,
 };
@@ -47,7 +47,7 @@ struct CachedToken {
 }
 
 type ConfiguredBasicClient =
-    BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
+BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 
 #[derive(Debug)]
 pub struct OAuth2TokenProvider<C: Clock = SystemClock> {
@@ -76,7 +76,8 @@ impl<C: Clock> OAuth2TokenProvider<C> {
         let client = BasicClient::new(ClientId::new(config.client_id.clone()))
             .set_client_secret(ClientSecret::new(config.client_secret.clone()))
             .set_auth_uri(auth_url)
-            .set_token_uri(token_url);
+            .set_token_uri(token_url)
+            .set_auth_type(AuthType::RequestBody);
 
         Ok(Self {
             config,
@@ -122,14 +123,16 @@ impl<C: Clock> OAuth2TokenProvider<C> {
                 return Ok(token.access_token.clone());
             }
         }
-        drop(guard); // read lock dropped
+        drop(guard);
 
         let http_client = reqwest::blocking::ClientBuilder::new()
+            .danger_accept_invalid_certs(true) // only for dev, same as curl -k
             .redirect(reqwest::redirect::Policy::none())
             .build()
             .map_err(|e| OAuth2TokenProviderError::HttpClientBuild(e.to_string()))?;
 
         let mut req = self.client.exchange_client_credentials();
+
         for s in &self.config.scopes {
             let scope = s.trim();
             if !scope.is_empty() {
@@ -154,7 +157,7 @@ impl<C: Clock> OAuth2TokenProvider<C> {
             access_token: access_token.clone(),
             expired_at,
         });
-        drop(guard); // write lock dropped
+        drop(guard);
 
         Ok(access_token)
     }
@@ -224,15 +227,15 @@ mod tests {
     }
 
     #[test]
-    fn get_token_fetches_and_caches_token() {
+    fn get_token_fetches_with_request_body_auth_and_caches_token() {
         let server = MockServer::start();
 
         let token_mock = server.mock(|when, then| {
             when.method(POST)
                 .path("/token")
                 .header("content-type", "application/x-www-form-urlencoded")
-                .body_not("grant_type=client_credentials")
-                .body_not("scope=scope-a+scope-b");
+                .body("grant_type=client_credentials&scope=scope-a+scope-b&client_id=client-id&client_secret=client-secret");
+
             then.status(200)
                 .header("content-type", "application/json")
                 .body(r#"{"access_token":"t1","token_type":"bearer","expires_in":3600}"#);
@@ -248,6 +251,7 @@ mod tests {
 
         assert_eq!(t1, "t1");
         assert_eq!(t2, "t1");
+
         token_mock.assert_calls(1);
     }
 
@@ -350,7 +354,7 @@ mod tests {
             },
             clock,
         )
-        .unwrap();
+            .unwrap();
 
         let err = provider.get_token().unwrap_err();
         assert!(matches!(err, OAuth2TokenProviderError::TokenRequest(_)));
