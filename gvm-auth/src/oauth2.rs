@@ -4,7 +4,7 @@
 
 use crate::clock::{Clock, SystemClock};
 use oauth2::basic::BasicClient;
-use oauth2::{reqwest, AuthType};
+use oauth2::{AuthType, reqwest};
 use oauth2::{
     AuthUrl, ClientId, ClientSecret, EndpointNotSet, EndpointSet, Scope, TokenResponse, TokenUrl,
 };
@@ -47,7 +47,7 @@ struct CachedToken {
 }
 
 type ConfiguredBasicClient =
-BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
+    BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 
 #[derive(Debug)]
 pub struct OAuth2TokenProvider<C: Clock = SystemClock> {
@@ -354,7 +354,7 @@ mod tests {
             },
             clock,
         )
-            .unwrap();
+        .unwrap();
 
         let err = provider.get_token().unwrap_err();
         assert!(matches!(err, OAuth2TokenProviderError::TokenRequest(_)));
