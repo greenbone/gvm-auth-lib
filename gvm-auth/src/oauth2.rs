@@ -38,6 +38,7 @@ pub struct ClientCredentialsConfig {
     pub client_secret: String,
     pub scopes: Vec<String>,
     pub refresh_skew_seconds: Option<u64>,
+    pub accept_invalid_certs: Option<bool>,
 }
 
 #[derive(Debug, Clone)]
@@ -126,7 +127,7 @@ impl<C: Clock> OAuth2TokenProvider<C> {
         drop(guard);
 
         let http_client = reqwest::blocking::ClientBuilder::new()
-            .danger_accept_invalid_certs(true) // only for dev, same as curl -k
+            .danger_accept_invalid_certs(self.config.accept_invalid_certs.unwrap_or(false)) // only for dev, same as curl -k
             .redirect(reqwest::redirect::Policy::none())
             .build()
             .map_err(|e| OAuth2TokenProviderError::HttpClientBuild(e.to_string()))?;
@@ -177,6 +178,7 @@ mod tests {
             client_secret: "client-secret".to_string(),
             scopes: vec!["scope-a".into(), "scope-b".into()],
             refresh_skew_seconds: Some(30),
+            accept_invalid_certs: Some(true),
         }
     }
 
@@ -188,6 +190,7 @@ mod tests {
             client_secret: "secret".into(),
             scopes: vec![],
             refresh_skew_seconds: None,
+            accept_invalid_certs: Some(true),
         };
 
         let mut c = base.clone();
@@ -220,6 +223,7 @@ mod tests {
             client_secret: "secret".into(),
             scopes: vec![],
             refresh_skew_seconds: None,
+            accept_invalid_certs: Some(true),
         };
 
         let provider = OAuth2TokenProvider::new(config).unwrap();
@@ -274,6 +278,7 @@ mod tests {
             client_secret: "client-secret".into(),
             scopes: vec![],
             refresh_skew_seconds: Some(30),
+            accept_invalid_certs: Some(true),
         };
 
         let provider = OAuth2TokenProvider::with_clock(config, clock.clone()).unwrap();
@@ -308,6 +313,7 @@ mod tests {
             client_secret: "client-secret".into(),
             scopes: vec![],
             refresh_skew_seconds: Some(0),
+            accept_invalid_certs: Some(true),
         };
 
         let provider = OAuth2TokenProvider::with_clock(config, clock.clone()).unwrap();
@@ -351,6 +357,7 @@ mod tests {
                 client_secret: "client-secret".into(),
                 scopes: vec![],
                 refresh_skew_seconds: None,
+                accept_invalid_certs: Some(true),
             },
             clock,
         )

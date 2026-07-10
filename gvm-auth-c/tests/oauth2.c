@@ -214,19 +214,19 @@ Ensure (oauth2, new_sets_error_on_null_inputs)
   gvm_oauth2_new_err_t err = GVM_OAUTH2_NEW_ERR_OK;
   gvm_oauth2_token_provider_t p;
 
-  p = gvm_oauth2_token_provider_new (NULL, NULL, NULL, NULL, 30, &err);
+  p = gvm_oauth2_token_provider_new (NULL, NULL, NULL, NULL, 30,true, &err);
   assert_that (p, is_null);
   assert_that (err, is_equal_to (GVM_OAUTH2_NEW_ERR_NO_TOKEN_URL));
 
   err = GVM_OAUTH2_NEW_ERR_OK;
   p = gvm_oauth2_token_provider_new ("http://127.0.0.1:1/token", NULL, NULL,
-                                     NULL, 30, &err);
+                                     NULL, 30,true, &err);
   assert_that (p, is_null);
   assert_that (err, is_equal_to (GVM_OAUTH2_NEW_ERR_NO_CLIENT_ID));
 
   err = GVM_OAUTH2_NEW_ERR_OK;
   p = gvm_oauth2_token_provider_new ("http://127.0.0.1:1/token", "id", NULL,
-                                     NULL, 30, &err);
+                                     NULL, 30,true, &err);
   assert_that (p, is_null);
   assert_that (err, is_equal_to (GVM_OAUTH2_NEW_ERR_NO_CLIENT_SECRET));
 }
@@ -236,7 +236,7 @@ Ensure (oauth2, new_maps_invalid_token_url)
   gvm_oauth2_new_err_t err = GVM_OAUTH2_NEW_ERR_OK;
 
   gvm_oauth2_token_provider_t p =
-    gvm_oauth2_token_provider_new ("not a url", "id", "secret", NULL, 30, &err);
+    gvm_oauth2_token_provider_new ("not a url", "id", "secret", NULL, 30,true, &err);
 
   assert_that (p, is_null);
   assert_that (err, is_equal_to (GVM_OAUTH2_NEW_ERR_INVALID_TOKEN_URL));
@@ -268,7 +268,7 @@ Ensure (oauth2, get_token_success_returns_c_string)
 
   gvm_oauth2_new_err_t new_err = GVM_OAUTH2_NEW_ERR_INTERNAL_ERROR;
   gvm_oauth2_token_provider_t p =
-    gvm_oauth2_token_provider_new (url, "id", "secret", NULL, 30, &new_err);
+    gvm_oauth2_token_provider_new (url, "id", "secret", NULL, 30,true, &new_err);
 
   assert_that (p, is_not_null);
   assert_that (new_err, is_equal_to (GVM_OAUTH2_NEW_ERR_OK));
@@ -299,7 +299,7 @@ Ensure (oauth2, get_token_server_500_maps_to_request_failed)
 
   gvm_oauth2_new_err_t new_err = GVM_OAUTH2_NEW_ERR_INTERNAL_ERROR;
   gvm_oauth2_token_provider_t p =
-    gvm_oauth2_token_provider_new (url, "id", "secret", NULL, 30, &new_err);
+    gvm_oauth2_token_provider_new (url, "id", "secret", NULL, 30,true, &new_err);
 
   assert_that (p, is_not_null);
   assert_that (new_err, is_equal_to (GVM_OAUTH2_NEW_ERR_OK));
@@ -328,7 +328,7 @@ Ensure (oauth2, get_token_missing_expires_in_maps_to_missing_expires_in_err)
 
   gvm_oauth2_new_err_t new_err = GVM_OAUTH2_NEW_ERR_INTERNAL_ERROR;
   gvm_oauth2_token_provider_t p =
-    gvm_oauth2_token_provider_new (url, "id", "secret", NULL, 30, &new_err);
+    gvm_oauth2_token_provider_new (url, "id", "secret", NULL, 30,true, &new_err);
 
   assert_that (p, is_not_null);
   assert_that (new_err, is_equal_to (GVM_OAUTH2_NEW_ERR_OK));
