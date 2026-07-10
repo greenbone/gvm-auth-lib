@@ -68,6 +68,8 @@ pub enum gvm_oauth2_get_token_err_t {
 ///   (space, comma, or semicolon separated).
 /// - `refresh_skew_seconds` controls when the cached token should be refreshed.
 ///   (Passed through to the Rust provider config.)
+/// - `accept_invalid_certs` controls whether TLS certificate validation is disabled.
+///   This should only be enabled for development environments with invalid/self-signed certificates.
 ///
 /// On success:
 /// - returns a non-NULL provider pointer
@@ -86,6 +88,7 @@ pub unsafe extern "C" fn gvm_oauth2_token_provider_new(
     client_secret: *const c_char,
     scopes: *const c_char,
     refresh_skew_seconds: u64,
+    accept_invalid_certs: bool,
     err: *mut gvm_oauth2_new_err_t,
 ) -> gvm_oauth2_token_provider_t {
     set_err!(err, gvm_oauth2_new_err_t::GVM_OAUTH2_NEW_ERR_INTERNAL_ERROR);
@@ -152,6 +155,7 @@ pub unsafe extern "C" fn gvm_oauth2_token_provider_new(
         client_secret,
         scopes: scopes_vec,
         refresh_skew_seconds: Some(refresh_skew_seconds),
+        accept_invalid_certs: Some(accept_invalid_certs),
     };
 
     let provider = match gvm_auth::oauth2::OAuth2TokenProvider::new(config) {
@@ -283,6 +287,7 @@ mod tests {
                 ptr::null(),
                 ptr::null(),
                 30,
+                true,
                 &mut err,
             )
         };
@@ -299,6 +304,7 @@ mod tests {
                 ptr::null(),
                 ptr::null(),
                 30,
+                true,
                 &mut err,
             )
         };
@@ -315,6 +321,7 @@ mod tests {
                 ptr::null(),
                 ptr::null(),
                 30,
+                true,
                 &mut err,
             )
         };
@@ -340,6 +347,7 @@ mod tests {
                 client_secret.as_ptr(),
                 ptr::null(),
                 30,
+                true,
                 &mut err,
             )
         };
@@ -369,6 +377,7 @@ mod tests {
                 client_secret.as_ptr(),
                 ptr::null(),
                 30,
+                false,
                 &mut err,
             )
         };
@@ -395,6 +404,7 @@ mod tests {
                 client_secret.as_ptr(),
                 ptr::null(),
                 30,
+                true,
                 &mut err,
             )
         };
@@ -432,6 +442,7 @@ mod tests {
                 client_secret.as_ptr(),
                 bad_scopes_ptr,
                 30,
+                true,
                 &mut new_err,
             )
         };
@@ -487,6 +498,7 @@ mod tests {
                 client_secret.as_ptr(),
                 scopes.as_ptr(),
                 30,
+                false,
                 &mut new_err,
             )
         };
@@ -527,6 +539,7 @@ mod tests {
                 client_secret.as_ptr(),
                 ptr::null(),
                 30,
+                true,
                 &mut err,
             )
         };
@@ -565,6 +578,7 @@ mod tests {
                 client_secret.as_ptr(),
                 ptr::null(),
                 30,
+                true,
                 &mut new_err,
             )
         };
@@ -608,6 +622,7 @@ mod tests {
                 client_secret.as_ptr(),
                 ptr::null(),
                 30,
+                true,
                 &mut new_err,
             )
         };
@@ -661,6 +676,7 @@ mod tests {
                 client_secret.as_ptr(),
                 ptr::null(),
                 30,
+                true,
                 &mut new_err,
             )
         };
@@ -706,6 +722,7 @@ mod tests {
                 client_secret.as_ptr(),
                 ptr::null(),
                 30,
+                true,
                 &mut new_err,
             )
         };
