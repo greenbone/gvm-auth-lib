@@ -3,7 +3,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use crate::strings::rs_string_to_c_ptr;
-use gvm_auth::jwt::{Claims, JwtDecodeSecret, JwtEncodeSecret, generate_token, validate_token};
+use gvm_auth::jwt::{
+    Claims, JwtDecodeSecret, JwtEncodeSecret, generate_token, generate_token_with_payload,
+    validate_token,
+};
 
 use crate::set_err;
 use chrono::TimeDelta;
@@ -354,7 +357,8 @@ pub unsafe extern "C" fn gvm_jwt_encode_secret_free(secret: gvm_jwt_encode_secre
     }
 }
 
-/// Enum specifying an error from `gvm_jwt_generate_token`
+/// Enum specifying an error from `gvm_jwt_generate_token` or
+/// `gvm_jwt_generate_token_with_payload`
 #[repr(C)]
 #[derive(Clone, Copy)]
 #[allow(non_camel_case_types)]
@@ -369,6 +373,10 @@ pub enum gvm_jwt_generate_token_err_t {
     GVM_JWT_GENERATE_TOKEN_ERR_INVALID_USER_ID = 2,
     /// Failed to generate token
     GVM_JWT_GENERATE_TOKEN_ERR_GENERATE_FAILED = 3,
+    /// Given payload was NULL
+    GVM_JWT_GENERATE_TOKEN_ERR_NO_PAYLOAD = 4,
+    /// Payload could not be converted to a UTF-8 string
+    GVM_JWT_GENERATE_TOKEN_ERR_INVALID_PAYLOAD = 5,
 }
 
 /// Returns a string describing a given gvm_jwt_generate_token_err_t
@@ -377,7 +385,7 @@ pub extern "C" fn gvm_jwt_generate_token_strerror(
     err: gvm_jwt_generate_token_err_t,
 ) -> *const c_char {
     let err_int = err as i32;
-    if !(-1..=3).contains(&err_int) {
+    if !(-1..=5).contains(&err_int) {
         return const_cstr!("unknown error").as_ptr();
     }
 
@@ -394,6 +402,12 @@ pub extern "C" fn gvm_jwt_generate_token_strerror(
         }
         gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_GENERATE_FAILED => {
             const_cstr!("failed to generate token").as_ptr()
+        }
+        gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_NO_PAYLOAD => {
+            const_cstr!("no payload given").as_ptr()
+        }
+        gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_INVALID_PAYLOAD => {
+            const_cstr!("payload could not be converted to a UTF-8 string").as_ptr()
         }
     }
 }
@@ -447,6 +461,77 @@ pub unsafe extern "C" fn gvm_jwt_generate_token(
         gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_OK
     );
     rs_string_to_c_ptr(token)
+}
+
+/// Sign a caller-provided payload using the secret's configured algorithm.
+///
+/// Returns an unpadded base64url payload.signature token without a JWT header.
+/// The payload bytes are preserved; JSON and payload claims are not validated.
+/// Returns NULL on failure and sets `err` if it is not NULL.
+/// The caller must free the returned token with `gvm_auth_str_free`.
+///
+/// # Safety
+/// `secret` must be a valid encode secret or NULL. `payload` must point to a
+/// valid NUL-terminated string or be NULL. `err` must be writable or NULL.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn gvm_jwt_generate_token_with_payload(
+    secret: gvm_jwt_encode_secret_t,
+    payload: *const c_char,
+    err: *mut gvm_jwt_generate_token_err_t,
+) -> *mut c_char {
+    set_err!(
+        err,
+        gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_INTERNAL_ERROR
+    );
+
+    if secret.is_null() {
+        set_err!(
+            err,
+            gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_NO_SECRET
+        );
+        return null_mut();
+    }
+    if payload.is_null() {
+        set_err!(
+            err,
+            gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_NO_PAYLOAD
+        );
+        return null_mut();
+    }
+
+    let rs_secret = unsafe { &(*secret).s };
+    let payload_cstr = unsafe { CStr::from_ptr(payload) };
+    let payload_str = match payload_cstr.to_str() {
+        Ok(s) => s,
+        Err(_e) => {
+            set_err!(
+                err,
+                gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_INVALID_PAYLOAD
+            );
+            return null_mut();
+        }
+    };
+
+    let token = match generate_token_with_payload(rs_secret, payload_str) {
+        Ok(s) => s,
+        Err(_e) => {
+            set_err!(
+                err,
+                gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_GENERATE_FAILED
+            );
+            return null_mut();
+        }
+    };
+    let token_ptr = rs_string_to_c_ptr(token);
+    if token_ptr.is_null() {
+        return null_mut();
+    }
+
+    set_err!(
+        err,
+        gvm_jwt_generate_token_err_t::GVM_JWT_GENERATE_TOKEN_ERR_OK
+    );
+    token_ptr
 }
 
 /// Opaque C wrapper for the Claims type
