@@ -617,7 +617,7 @@ dependencies = [
 
 [[package]]
 name = "gvm-auth"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "base64",
  "chrono",
@@ -632,7 +632,7 @@ dependencies = [
 
 [[package]]
 name = "gvm-auth-c"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "build-print",
  "cbindgen",
@@ -648,7 +648,7 @@ dependencies = [
 
 [[package]]
 name = "gvm-auth-cli"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "chrono",
  "clap",
