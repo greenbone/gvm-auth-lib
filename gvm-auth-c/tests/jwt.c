@@ -11,6 +11,7 @@
 #include <cgreen/cgreen.h>
 #include <cgreen/mocks.h>
 #include <gvm_auth.h>
+#include <string.h>
 #include <test_data.h>
 #include <time.h>
 
@@ -81,7 +82,16 @@ Ensure (jwt, can_get_generate_error_strings)
   assert_that (gvm_jwt_generate_token_strerror (-2),
                is_equal_to_string ("unknown error"));
 
-  assert_that (gvm_jwt_generate_token_strerror (4),
+  assert_that (
+    gvm_jwt_generate_token_strerror (GVM_JWT_GENERATE_TOKEN_ERR_NO_PAYLOAD),
+    is_equal_to_string ("no payload given"));
+
+  assert_that (
+    gvm_jwt_generate_token_strerror (
+      GVM_JWT_GENERATE_TOKEN_ERR_INVALID_PAYLOAD),
+    is_equal_to_string ("payload could not be converted to a UTF-8 string"));
+
+  assert_that (gvm_jwt_generate_token_strerror (6),
                is_equal_to_string ("unknown error"));
 
   assert_that (gvm_jwt_generate_token_strerror (123),
@@ -316,6 +326,210 @@ Ensure (jwt, rejects_null_secret_or_token)
   gvm_auth_str_free (token);
 }
 
+Ensure (jwt, can_generate_payload_tokens_from_agent_control_vectors)
+{
+  const struct
+  {
+    const char *secret;
+    const char *payload;
+    const char *token;
+  } vectors[] = {
+    {"0123456789abcdef0123456789abcdef",
+     "{\"v\":1,\"iat\":1755158400,\"exp\":1755159000,\"nonce\":"
+     "\"kf3B9zR2xY7pQ4mW8sT1Vg\"}",
+     "eyJ2IjoxLCJpYXQiOjE3NTUxNTg0MDAsImV4cCI6MTc1NTE1OTAwMCwibm9uY2UiOiJrZjNCO"
+     "XpSMnhZN3BRNG1XOHNUMVZnIn0.fXt4Ig3MjwukZ107eO3vyLxpp9YGs7UBiEKcORa5_t4"},
+    {"0123456789abcdef0123456789abcdef",
+     "{\"nonce\":\"Zm9vYmFyMTIzNDU2Nzg5MA\",\"exp\":1755159000,\"iat\":"
+     "1755158400,\"v\":1}",
+     "eyJub25jZSI6IlptOXZZbUZ5TVRJek5EVTJOemc1TUEiLCJleHAiOjE3NTUxNTkwMDAsImlhd"
+     "CI6MTc1NTE1ODQwMCwidiI6MX0.nsUR7tM5RmL2mTBi-yTOBehtxQQHLObEmiraXUqO6dw"},
+    {"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "{\"v\":1,\"iat\":1755158400,\"exp\":1755159000,\"nonce\":"
+     "\"kf3B9zR2xY7pQ4mW8sT1Vg\"}",
+     "eyJ2IjoxLCJpYXQiOjE3NTUxNTg0MDAsImV4cCI6MTc1NTE1OTAwMCwibm9uY2UiOiJrZjNCO"
+     "XpSMnhZN3BRNG1XOHNUMVZnIn0.raxzRNLjAu9FiBA1Mcdh1TfgRmmH9KbTKcM3Xf9CUMM"},
+  };
+
+  for (size_t i = 0; i < sizeof (vectors) / sizeof (vectors[0]); i++)
+    {
+      gvm_jwt_new_secret_err_t secret_err;
+      gvm_jwt_generate_token_err_t err;
+      gvm_jwt_encode_secret_t secret;
+      char *token;
+
+      secret =
+        gvm_jwt_new_shared_encode_secret (vectors[i].secret, &secret_err);
+      assert_that (secret_err, is_equal_to (GVM_JWT_NEW_SECRET_ERR_OK));
+      assert_that (secret, is_not_null);
+
+      err = GVM_JWT_GENERATE_TOKEN_ERR_INTERNAL_ERROR;
+      token =
+        gvm_jwt_generate_token_with_payload (secret, vectors[i].payload, &err);
+      assert_that (err, is_equal_to (GVM_JWT_GENERATE_TOKEN_ERR_OK));
+      assert_that (token, is_not_null);
+      assert_that (token, is_equal_to_string (vectors[i].token));
+
+      gvm_auth_str_free (token);
+      gvm_jwt_encode_secret_free (secret);
+    }
+}
+
+Ensure (jwt, can_generate_payload_tokens_from_all_secret_types)
+{
+  const struct
+  {
+    gvm_jwt_secret_type_t type;
+    const char *data;
+    size_t signature_length;
+  } secrets[] = {
+    {GVM_JWT_SECRET_TYPE_SHARED, "0123456789abcdef0123456789abcdef", 43},
+    {GVM_JWT_SECRET_TYPE_RSA_PEM, TEST_RSA_PRIVATE_PEM, 342},
+    {GVM_JWT_SECRET_TYPE_EC_PEM, TEST_ECDSA_PRIVATE_PEM, 86},
+  };
+  const char *prefix = "eyJjdXN0b20iOiJ2YWx1ZSJ9.";
+  const char *alphabet =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+  for (size_t i = 0; i < sizeof (secrets) / sizeof (secrets[0]); i++)
+    {
+      gvm_jwt_new_secret_err_t secret_err;
+      gvm_jwt_generate_token_err_t err;
+      gvm_jwt_encode_secret_t secret;
+      char *token;
+      const char *signature;
+
+      secret = gvm_jwt_new_encode_secret (secrets[i].type, secrets[i].data,
+                                          &secret_err);
+      assert_that (secret_err, is_equal_to (GVM_JWT_NEW_SECRET_ERR_OK));
+      assert_that (secret, is_not_null);
+
+      token = gvm_jwt_generate_token_with_payload (
+        secret, "{\"custom\":\"value\"}", &err);
+      assert_that (err, is_equal_to (GVM_JWT_GENERATE_TOKEN_ERR_OK));
+      assert_that (token, is_not_null);
+      assert_that (strncmp (token, prefix, strlen (prefix)), is_equal_to (0));
+
+      signature = strchr (token, '.');
+      assert_that (signature, is_not_null);
+      signature++;
+      assert_that (strlen (signature),
+                   is_equal_to (secrets[i].signature_length));
+      assert_that (strspn (signature, alphabet),
+                   is_equal_to (strlen (signature)));
+
+      gvm_auth_str_free (token);
+      gvm_jwt_encode_secret_free (secret);
+    }
+}
+
+Ensure (jwt, preserves_custom_payload_bytes)
+{
+  gvm_jwt_encode_secret_t secret;
+  gvm_jwt_generate_token_err_t err;
+  char *token;
+  const char *payload = "{\n  \"custom\": {\"name\": \"München\", \"roles\": "
+                        "[\"agent\"]},\n  \"enabled\": true\n}";
+  const char *expected =
+    "ewogICJjdXN0b20iOiB7Im5hbWUiOiAiTcO8bmNoZW4iLCAicm9sZXMiOiBbImFnZW50Il19LA"
+    "ogICJlbmFibGVkIjogdHJ1ZQp9.jrQMKDDqgaof5uLd13iqDQ_vayUwu2VcQuATuxxTjio";
+
+  secret =
+    gvm_jwt_new_shared_encode_secret ("0123456789abcdef0123456789abcdef", NULL);
+  assert_that (secret, is_not_null);
+
+  token = gvm_jwt_generate_token_with_payload (secret, payload, &err);
+  assert_that (err, is_equal_to (GVM_JWT_GENERATE_TOKEN_ERR_OK));
+  assert_that (token, is_not_null);
+  assert_that (token, is_equal_to_string (expected));
+
+  gvm_auth_str_free (token);
+  gvm_jwt_encode_secret_free (secret);
+}
+
+Ensure (jwt, can_generate_payload_token_without_error_output)
+{
+  gvm_jwt_encode_secret_t secret;
+  char *token;
+
+  secret =
+    gvm_jwt_new_shared_encode_secret ("0123456789abcdef0123456789abcdef", NULL);
+  assert_that (secret, is_not_null);
+
+  token = gvm_jwt_generate_token_with_payload (secret, "{\"custom\":\"value\"}",
+                                               NULL);
+  assert_that (token, is_not_null);
+  assert_that (
+    token,
+    is_equal_to_string (
+      "eyJjdXN0b20iOiJ2YWx1ZSJ9.cOo3qw8pllorSjbNT-622pheYdSabOhpYPGj5B038B8"));
+
+  gvm_auth_str_free (token);
+  gvm_jwt_encode_secret_free (secret);
+}
+
+Ensure (jwt, rejects_null_secret_for_payload_token)
+{
+  gvm_jwt_generate_token_err_t err = GVM_JWT_GENERATE_TOKEN_ERR_OK;
+  char *token;
+
+  token = gvm_jwt_generate_token_with_payload (NULL, "{}", &err);
+  assert_that (token, is_null);
+  assert_that (err, is_equal_to (GVM_JWT_GENERATE_TOKEN_ERR_NO_SECRET));
+}
+
+Ensure (jwt, rejects_null_payload_for_payload_token)
+{
+  gvm_jwt_encode_secret_t secret;
+  gvm_jwt_generate_token_err_t err = GVM_JWT_GENERATE_TOKEN_ERR_OK;
+  char *token;
+
+  secret = gvm_jwt_new_shared_encode_secret ("ABCDEF", NULL);
+  assert_that (secret, is_not_null);
+
+  token = gvm_jwt_generate_token_with_payload (secret, NULL, &err);
+  assert_that (token, is_null);
+  assert_that (err, is_equal_to (GVM_JWT_GENERATE_TOKEN_ERR_NO_PAYLOAD));
+
+  gvm_jwt_encode_secret_free (secret);
+}
+
+Ensure (jwt, rejects_non_utf8_payload)
+{
+  gvm_jwt_encode_secret_t secret;
+  gvm_jwt_generate_token_err_t err = GVM_JWT_GENERATE_TOKEN_ERR_OK;
+  const char payload[] = {(char) 0xff, '\0'};
+  char *token;
+
+  secret = gvm_jwt_new_shared_encode_secret ("ABCDEF", NULL);
+  assert_that (secret, is_not_null);
+
+  token = gvm_jwt_generate_token_with_payload (secret, payload, &err);
+  assert_that (token, is_null);
+  assert_that (err, is_equal_to (GVM_JWT_GENERATE_TOKEN_ERR_INVALID_PAYLOAD));
+
+  gvm_jwt_encode_secret_free (secret);
+}
+
+Ensure (jwt, handles_payload_errors_without_error_output)
+{
+  gvm_jwt_encode_secret_t secret;
+  const char payload[] = {(char) 0xff, '\0'};
+  char *token;
+
+  secret = gvm_jwt_new_shared_encode_secret ("ABCDEF", NULL);
+  assert_that (secret, is_not_null);
+
+  token = gvm_jwt_generate_token_with_payload (NULL, "{}", NULL);
+  assert_that (token, is_null);
+  token = gvm_jwt_generate_token_with_payload (secret, NULL, NULL);
+  assert_that (token, is_null);
+  token = gvm_jwt_generate_token_with_payload (secret, payload, NULL);
+  assert_that (token, is_null);
+
+  gvm_jwt_encode_secret_free (secret);
+}
+
 /* Test suite. */
 
 int
@@ -337,6 +551,19 @@ main (int argc, char **argv)
   add_test_with_context (suite, jwt, can_get_token_claims);
   add_test_with_context (suite, jwt, rejects_expired_token);
   add_test_with_context (suite, jwt, rejects_null_secret_or_token);
+
+  add_test_with_context (
+    suite, jwt, can_generate_payload_tokens_from_agent_control_vectors);
+  add_test_with_context (suite, jwt,
+                         can_generate_payload_tokens_from_all_secret_types);
+  add_test_with_context (suite, jwt, preserves_custom_payload_bytes);
+  add_test_with_context (suite, jwt,
+                         can_generate_payload_token_without_error_output);
+  add_test_with_context (suite, jwt, rejects_null_secret_for_payload_token);
+  add_test_with_context (suite, jwt, rejects_null_payload_for_payload_token);
+  add_test_with_context (suite, jwt, rejects_non_utf8_payload);
+  add_test_with_context (suite, jwt,
+                         handles_payload_errors_without_error_output);
 
   if (argc > 1)
     ret = run_single_test (suite, argv[1], reporter);
