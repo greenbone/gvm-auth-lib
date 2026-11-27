@@ -57,11 +57,11 @@ pub enum JwtEncodeSecret {
 }
 
 impl JwtEncodeSecret {
-    pub fn from_shared_secret(secret: &str) -> Self {
-        JwtEncodeSecret::SharedSecret(
-            EncodingKey::from_secret(secret.as_bytes()),
+    pub fn from_shared_secret(secret: &str) -> Result<Self, jsonwebtoken::errors::Error> {
+        Ok(JwtEncodeSecret::SharedSecret(
+            EncodingKey::from_secret(secret.as_bytes())?,
             Algorithm::HS256,
-        )
+        ))
     }
 
     pub fn from_rsa_pem(pem: &[u8]) -> Result<Self, jsonwebtoken::errors::Error> {
@@ -90,11 +90,11 @@ pub enum JwtDecodeSecret {
 }
 
 impl JwtDecodeSecret {
-    pub fn from_shared_secret(secret: &str) -> Self {
-        JwtDecodeSecret::SharedSecret(
-            DecodingKey::from_secret(secret.as_bytes()),
+    pub fn from_shared_secret(secret: &str) -> Result<Self, jsonwebtoken::errors::Error> {
+        Ok(JwtDecodeSecret::SharedSecret(
+            DecodingKey::from_secret(secret.as_bytes())?,
             Algorithm::HS256,
-        )
+        ))
     }
 
     pub fn from_rsa_pem(pem: &[u8]) -> Result<Self, jsonwebtoken::errors::Error> {
@@ -172,8 +172,10 @@ mod tests {
     #[test]
     fn test_shared_secret() {
         let secret = "my_secret".to_string();
-        let decode_secret = JwtDecodeSecret::from_shared_secret(&secret);
-        let encode_secret = JwtEncodeSecret::from_shared_secret(&secret);
+        let decode_secret =
+            JwtDecodeSecret::from_shared_secret(&secret).expect("Failed to create decode secret");
+        let encode_secret =
+            JwtEncodeSecret::from_shared_secret(&secret).expect("Failed to create encode secret");
         let claims = Claims::new("test_user".to_string(), Duration::minutes(10));
         let token = generate_token(&encode_secret, &claims).expect("Failed to generate token");
         let decoded_claims =
@@ -181,6 +183,21 @@ mod tests {
         assert_eq!(decoded_claims.sub, claims.sub);
         assert_eq!(decoded_claims.exp, claims.exp);
         assert_eq!(decoded_claims.iat, claims.iat);
+    }
+
+    #[test]
+    fn test_empty_shared_secret() {
+        let encode_error = JwtEncodeSecret::from_shared_secret("").unwrap_err();
+        let decode_error = JwtDecodeSecret::from_shared_secret("").unwrap_err();
+
+        assert_eq!(
+            encode_error.kind(),
+            &jsonwebtoken::errors::ErrorKind::InvalidKeyFormat
+        );
+        assert_eq!(
+            decode_error.kind(),
+            &jsonwebtoken::errors::ErrorKind::InvalidKeyFormat
+        );
     }
 
     #[test]
@@ -220,8 +237,10 @@ mod tests {
     #[test]
     fn test_expired_token() {
         let secret = "my_secret".to_string();
-        let decode_secret = JwtDecodeSecret::from_shared_secret(&secret);
-        let encode_secret = JwtEncodeSecret::from_shared_secret(&secret);
+        let decode_secret =
+            JwtDecodeSecret::from_shared_secret(&secret).expect("Failed to create decode secret");
+        let encode_secret =
+            JwtEncodeSecret::from_shared_secret(&secret).expect("Failed to create encode secret");
         let claims = Claims::new("test_user".to_string(), Duration::seconds(-100));
         let token = generate_token(&encode_secret, &claims).expect("Failed to generate token");
         let result = validate_token(&decode_secret, &token);
@@ -252,7 +271,8 @@ mod tests {
         ];
 
         for (name, secret, payload, expected) in vectors {
-            let secret = JwtEncodeSecret::from_shared_secret(secret);
+            let secret = JwtEncodeSecret::from_shared_secret(secret)
+                .expect("Failed to create encode secret");
             let token =
                 generate_token_with_payload(&secret, payload).expect("Failed to generate token");
             assert_eq!(token, expected, "Vector: {name}");
@@ -261,7 +281,8 @@ mod tests {
 
     #[test]
     fn test_generate_token_with_payload_preserves_custom_payload() {
-        let secret = JwtEncodeSecret::from_shared_secret("0123456789abcdef0123456789abcdef");
+        let secret = JwtEncodeSecret::from_shared_secret("0123456789abcdef0123456789abcdef")
+            .expect("Failed to create encode secret");
         let payload = r#"{
   "custom": {"name": "München", "roles": ["agent"]},
   "enabled": true
@@ -282,11 +303,13 @@ mod tests {
     fn test_generate_token_with_payload_hmac_algorithms() {
         let secret = b"0123456789abcdef0123456789abcdef";
         let payload = r#"{"custom":"value"}"#;
-        let decode_key = DecodingKey::from_secret(secret);
+        let decode_key = DecodingKey::from_secret(secret).expect("Failed to create decode key");
 
         for alg in [Algorithm::HS256, Algorithm::HS384, Algorithm::HS512] {
-            let encode_secret =
-                JwtEncodeSecret::SharedSecret(EncodingKey::from_secret(secret), alg);
+            let encode_secret = JwtEncodeSecret::SharedSecret(
+                EncodingKey::from_secret(secret).expect("Failed to create encode key"),
+                alg,
+            );
             let token = generate_token_with_payload(&encode_secret, payload)
                 .expect("Failed to generate token");
             let (encoded_payload, signature) =
@@ -351,8 +374,10 @@ mod tests {
     #[test]
     fn test_generate_token_with_payload_signature_authenticates_payload_and_secret() {
         let secret = "0123456789abcdef0123456789abcdef";
-        let encode_secret = JwtEncodeSecret::from_shared_secret(secret);
-        let decode_key = DecodingKey::from_secret(secret.as_bytes());
+        let encode_secret =
+            JwtEncodeSecret::from_shared_secret(secret).expect("Failed to create encode secret");
+        let decode_key =
+            DecodingKey::from_secret(secret.as_bytes()).expect("Failed to create decode key");
         let token = generate_token_with_payload(&encode_secret, r#"{"custom":"value"}"#)
             .expect("Failed to generate token");
         let (encoded_payload, signature) =
@@ -368,7 +393,7 @@ mod tests {
             .expect("Failed to verify signature")
         );
 
-        let wrong_key = DecodingKey::from_secret(b"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+        let wrong_key = DecodingKey::from_secret(b"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx").unwrap();
         assert!(
             !crypto::verify(
                 signature,
@@ -394,7 +419,7 @@ mod tests {
     #[test]
     fn test_generate_token_with_payload_propagates_signing_error() {
         let secret = JwtEncodeSecret::SharedSecret(
-            EncodingKey::from_secret(b"0123456789abcdef0123456789abcdef"),
+            EncodingKey::from_secret(b"0123456789abcdef0123456789abcdef").unwrap(),
             Algorithm::RS256,
         );
 
