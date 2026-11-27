@@ -18,7 +18,8 @@ fn main() {
         Commands::Jwt(cmd) => {
             let claims = Claims::new(cmd.subject, Duration::seconds(cmd.duration as i64));
             let secret = if let Some(secret) = cmd.secret.secret {
-                Ok(JwtEncodeSecret::from_shared_secret(&secret))
+                JwtEncodeSecret::from_shared_secret(&secret)
+                    .map_err(|e| format!("Error reading shared secret: {}", e))
             } else if let Some(rsa_key_path) = cmd.secret.rsa_key {
                 match std::fs::read(&rsa_key_path) {
                     Ok(key_data) => match JwtEncodeSecret::from_rsa_pem(&key_data) {

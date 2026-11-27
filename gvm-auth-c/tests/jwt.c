@@ -129,6 +129,21 @@ Ensure (jwt, can_get_validate_error_strings)
                is_equal_to_string ("unknown error"));
 }
 
+Ensure (jwt, rejects_empty_shared_secrets)
+{
+  gvm_jwt_new_secret_err_t err = GVM_JWT_NEW_SECRET_ERR_OK;
+
+  assert_that (gvm_jwt_new_shared_encode_secret ("", &err), is_null);
+  assert_that (err, is_equal_to (GVM_JWT_NEW_SECRET_ERR_INTERNAL_ERROR));
+
+  err = GVM_JWT_NEW_SECRET_ERR_OK;
+  assert_that (gvm_jwt_new_shared_decode_secret ("", &err), is_null);
+  assert_that (err, is_equal_to (GVM_JWT_NEW_SECRET_ERR_INTERNAL_ERROR));
+
+  assert_that (gvm_jwt_new_shared_encode_secret ("", NULL), is_null);
+  assert_that (gvm_jwt_new_shared_decode_secret ("", NULL), is_null);
+}
+
 Ensure (jwt, can_generate_valid_token)
 {
   gvm_jwt_encode_secret_t enc_secret;
@@ -545,6 +560,7 @@ main (int argc, char **argv)
   add_test_with_context (suite, jwt, can_get_new_secret_error_strings);
   add_test_with_context (suite, jwt, can_get_generate_error_strings);
   add_test_with_context (suite, jwt, can_get_validate_error_strings);
+  add_test_with_context (suite, jwt, rejects_empty_shared_secrets);
   add_test_with_context (suite, jwt, can_generate_valid_token);
   add_test_with_context (suite, jwt, can_generate_valid_token_from_ecdsa_pem);
   add_test_with_context (suite, jwt, can_generate_valid_token_from_rsa_pem);

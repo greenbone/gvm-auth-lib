@@ -129,7 +129,10 @@ pub unsafe extern "C" fn gvm_jwt_new_decode_secret(
                     return null_mut();
                 }
             };
-            JwtDecodeSecret::from_shared_secret(data_str)
+            match JwtDecodeSecret::from_shared_secret(data_str) {
+                Ok(s) => s,
+                Err(_e) => return null_mut(),
+            }
         }
         gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_EC_PEM => {
             let data_cstr = unsafe { CStr::from_ptr(secret_data) };
@@ -261,7 +264,10 @@ pub unsafe extern "C" fn gvm_jwt_new_encode_secret(
                     return null_mut();
                 }
             };
-            JwtEncodeSecret::from_shared_secret(data_str)
+            match JwtEncodeSecret::from_shared_secret(data_str) {
+                Ok(s) => s,
+                Err(_e) => return null_mut(),
+            }
         }
         gvm_jwt_secret_type_t::GVM_JWT_SECRET_TYPE_EC_PEM => {
             let data_cstr = unsafe { CStr::from_ptr(secret_data) };
